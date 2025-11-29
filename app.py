@@ -99,6 +99,18 @@ def get_info():
             'quiet': True,
             'no_warnings': True,
             'extract_flat': False,
+            # Anti-bot detection settings
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android', 'web'],
+                    'player_skip': ['webpage', 'configs'],
+                }
+            },
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-us,en;q=0.5',
+            },
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -440,8 +452,23 @@ def download_video(url, resolution, save_path, session_id,
             })
     
     try:
+        # Anti-bot detection settings for yt-dlp
+        anti_bot_opts = {
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android', 'web'],
+                    'player_skip': ['webpage', 'configs'],
+                }
+            },
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-us,en;q=0.5',
+            },
+        }
+        
         # First, get video info for history
-        with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
+        with yt_dlp.YoutubeDL({**anti_bot_opts, 'quiet': True}) as ydl:
             info = ydl.extract_info(url, download=False)
             video_title = info.get('title', 'Unknown')
             video_thumbnail = info.get('thumbnail', '')
@@ -453,6 +480,7 @@ def download_video(url, resolution, save_path, session_id,
         
         # Base options
         base_opts = {
+            **anti_bot_opts,
             'paths': {'home': save_path},
             'outtmpl': '%(title)s.%(ext)s',
             'ffmpeg_location': FFMPEG_PATH,
