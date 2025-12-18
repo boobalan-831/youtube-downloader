@@ -36,7 +36,20 @@ def get_info():
         return jsonify({'error': 'URL is required'}), 400
 
     try:
-        ydl_opts = {'quiet': True, 'no_warnings': True}
+        ydl_opts = {
+            'quiet': True, 
+            'no_warnings': True,
+            'nocheckcertificate': True,
+            # Stealth options
+            'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        }
+
+        # Check for cookies.txt
+        cookies_path = os.path.join(os.getcwd(), 'cookies.txt')
+        if os.path.exists(cookies_path):
+            ydl_opts['cookiefile'] = cookies_path
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
         
@@ -117,7 +130,16 @@ def download_worker(session_id, url, format_id, is_audio, subtitles=False):
         'quiet': True,
         'no_warnings': True,
         'noplaylist': True,
+        'nocheckcertificate': True,
+        # Stealth options
+        'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     }
+    
+    # Check for cookies.txt
+    cookies_path = os.path.join(os.getcwd(), 'cookies.txt')
+    if os.path.exists(cookies_path):
+        ydl_opts['cookiefile'] = cookies_path
     
     if is_audio:
          ydl_opts['postprocessors'] = [{
