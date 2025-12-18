@@ -37,59 +37,102 @@ def index():
 
 def extract_info_safe(url):
     """
-    Tries to extract video info using multiple client configurations.
-    Returns the info dict or raises an exception if all attempts fail.
+    Robust extraction with Invidious Fallback.
     """
-    # Order of attempts: 
-    # 1. 'android' (Often bypasses bot checks)
-    # 2. 'web' (Standard, best metadata, but high bot detection)
-    # 3. 'ios' (Backup mobile client)
-    # 4. 'tv' (Android TV, sometimes restricted formats but different API)
-    
-    clients = ['android', 'web', 'ios', 'tv']
-    last_error = None
-    
     cookies_path = os.path.join(os.getcwd(), 'cookies.txt')
     has_cookies = os.path.exists(cookies_path)
     
-    # If cookies are present, prioritize 'web' as it works best with auth
     if has_cookies:
-        clients = ['web', 'android', 'ios']
-
-    for client in clients:
         try:
-            logger.info(f"Attempting extraction with client: {client}")
-            
-            ydl_opts = {
-                'quiet': True,
-                'no_warnings': True,
-                'nocheckcertificate': True,
-                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            }
-            
-            if has_cookies:
-                ydl_opts['cookiefile'] = cookies_path
-            
-            # Configure client-specific args
-            if client == 'android':
-                ydl_opts['extractor_args'] = {'youtube': {'player_client': ['android', 'web']}}
-            elif client == 'ios':
-                ydl_opts['extractor_args'] = {'youtube': {'player_client': ['ios']}}
-            elif client == 'tv':
-                ydl_opts['extractor_args'] = {'youtube': {'player_client': ['android_tv']}}
-            else: # web
-                 ydl_opts['extractor_args'] = {'youtube': {'player_client': ['web']}}
+            with open(cookies_path, 'r') as f:
+                content = f.read(20)
+                logger.info(f"Cookies found: {content}...")
+        except:
+            pass
 
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=False)
-                return info, ydl_opts # Return successful opts to reuse for download
-                
-        except Exception as e:
-            logger.warning(f"Failed with client {client}: {e}")
-            last_error = e
-            time.sleep(0.5) # Slight delay between attempts
+    # Attempt 1: Standard yt-dlp (Web Client)
+    # This works best if cookies are present.
+    try:
+        logger.info("Attempt 1: Standard Web Client")
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'nocheckcertificate': True,
+            'cachedir': False, # Disable cache to prevent stale bot-checks
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        }
+        if has_cookies:
+            ydl_opts['cookiefile'] = cookies_path
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            return info, ydl_opts
+    except Exception as e:
+        logger.warning(f"Web Client failed: {e}")
+
+    # Attempt 2: Android Client (Bypass for some IPs)
+    try:
+        logger.info("Attempt 2: Android Client")
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'nocheckcertificate': True,
+            'cachedir': False,
+            'extractor_args': {'youtube': {'player_client': ['android']}},
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            return info, ydl_opts
+    except Exception as e:
+        logger.warning(f"Android Client failed: {e}")
+
+    # Attempt 3: Invidious Fallback (Proxy Metadata)
+    # If our IP is banned, we ask a public Invidious instance for the info.
+    try:
+        logger.info("Attempt 3: Invidious API Fallback")
+        # Extract video ID
+        video_id = url.split('v=')[-1].split('&')[0]
+        if 'youtu.be' in url:
+            video_id = url.split('/')[-1]
             
-    raise last_error
+        import requests
+        # Using a reliable Invidious instance
+        api_url = f"https://inv.tux.pizza/api/v1/videos/{video_id}"
+        resp = requests.get(api_url, timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            # Map Invidious data to yt-dlp format
+            formats = []
+            for f in data.get('formatStreams', []) + data.get('adaptiveFormats', []):
+                formats.append({
+                    'format_id': f.get('itag'),
+                    'url': f.get('url'),
+                    'ext': f.get('container'),
+                    'vcodec': f.get('encoding'),
+                    'acodec': f.get('audioEncoding'),
+                    'height': f.get('resolution', '').replace('p', '') if f.get('resolution') else None,
+                    'width': None
+                })
+            
+            info = {
+                'id': data['videoId'],
+                'title': data['title'],
+                'thumbnail': data['videoThumbnails'][0]['url'] if data.get('videoThumbnails') else None,
+                'uploader': data['author'],
+                'duration': data['lengthSeconds'],
+                'view_count': data['viewCount'],
+                'upload_date': data['publishedText'], # Approximation
+                'formats': formats
+            }
+            # We return empty opts because we can't use yt-dlp to download 
+            # using standard extractors if we used Invidious. 
+            # We will handle this in download_worker.
+            return info, {'fallback_source': 'invidious'}
+            
+    except Exception as e:
+        logger.warning(f"Invidious Fallback failed: {e}")
+
+    raise Exception("All extraction methods failed. Server IP may be blocked by YouTube.")
 
 @app.route('/get_info', methods=['POST'])
 def get_info():
@@ -98,11 +141,7 @@ def get_info():
         return jsonify({'error': 'URL is required'}), 400
 
     try:
-        info, successful_opts = extract_info_safe(url)
-        
-        # Store successful options for this video/session if possible, 
-        # or we just re-run the logic in download_worker (less efficient but stateless)
-        # For now, we'll re-run logic in download_worker or pass the 'client' param.
+        info, _ = extract_info_safe(url)
         
         resolutions = []
         audio_formats = []
@@ -110,19 +149,17 @@ def get_info():
         formats = info.get('formats', [])
         seen_res = set()
         
-        # Sort formats to find best ones
         for f in formats:
             # Video formats
-            if f.get('vcodec') != 'none' and f.get('height'):
-                h = f['height']
+            # Invidious formats might have different keys, handled in mapping above
+            h = f.get('height')
+            if h and str(h).isdigit():
                 if h not in seen_res:
-                    resolutions.append({'value': f['format_id'], 'label': f'{h}p'})
+                    resolutions.append({'value': f.get('format_id') or 'best', 'label': f'{h}p'})
                     seen_res.add(h)
         
-        # Sort resolutions high to low
         resolutions.sort(key=lambda x: int(x['label'][:-1]) if x['label'][:-1].isdigit() else 0, reverse=True)
         
-        # Add a "Best" option
         if not resolutions:
              resolutions.append({'value': 'best', 'label': 'Best Quality'})
 
@@ -131,7 +168,7 @@ def get_info():
         return jsonify({
             'title': info.get('title'),
             'thumbnail': info.get('thumbnail'),
-            'duration_formatted': info.get('duration_string') or _format_duration(info.get('duration')),
+            'duration_formatted': _format_duration(info.get('duration')),
             'channel': info.get('uploader'),
             'viewCount': info.get('view_count'),
             'uploadDate': info.get('upload_date'),
@@ -174,93 +211,122 @@ def download_worker(session_id, url, format_id, is_audio, subtitles=False):
             session['progress'] = 99
             session['temp_filename'] = d['filename']
 
-    # Retry Strategy for Download
-    clients = ['android', 'web', 'ios', 'tv']
-    cookies_path = os.path.join(os.getcwd(), 'cookies.txt')
-    has_cookies = os.path.exists(cookies_path)
-    
-    if has_cookies:
-        clients = ['web', 'android', 'ios']
+    # Try standard download first
+    try:
+        # Check for cookies
+        cookies_path = os.path.join(os.getcwd(), 'cookies.txt')
+        has_cookies = os.path.exists(cookies_path)
         
-    success = False
-    last_error = None
-
-    for client in clients:
-        if success: break
+        ydl_opts = {
+            'format': format_id if not is_audio else 'bestaudio/best',
+            'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
+            'progress_hooks': [progress_hook],
+            'quiet': True,
+            'no_warnings': True,
+            'noplaylist': True,
+            'nocheckcertificate': True,
+            'cachedir': False,
+            # Start with standard Web client
+            'extractor_args': {'youtube': {'player_client': ['web', 'android']}}, 
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        }
         
-        try:
-            logger.info(f"Starting download with client: {client}")
+        if has_cookies:
+            ydl_opts['cookiefile'] = cookies_path
             
-            ydl_opts = {
-                'format': format_id if not is_audio else 'bestaudio/best',
-                'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
-                'progress_hooks': [progress_hook],
-                'quiet': True,
-                'no_warnings': True,
-                'noplaylist': True,
-                'nocheckcertificate': True,
-                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            }
-            
-            if has_cookies:
-                ydl_opts['cookiefile'] = cookies_path
+        if is_audio:
+             ydl_opts['postprocessors'] = [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }]
+        
+        if subtitles:
+            ydl_opts['writesubtitles'] = True
 
-            # Configure client-specific args
-            if client == 'android':
-                ydl_opts['extractor_args'] = {'youtube': {'player_client': ['android', 'web']}}
-            elif client == 'ios':
-                ydl_opts['extractor_args'] = {'youtube': {'player_client': ['ios']}}
-            elif client == 'tv':
-                ydl_opts['extractor_args'] = {'youtube': {'player_client': ['android_tv']}}
-            else: # web
-                 ydl_opts['extractor_args'] = {'youtube': {'player_client': ['web']}}
-            
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            session['title'] = info.get('title', 'Video')
+            filename = ydl.prepare_filename(info)
             if is_audio:
-                 ydl_opts['postprocessors'] = [{
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'mp3',
-                    'preferredquality': '192',
-                }]
-            
-            if subtitles:
-                ydl_opts['writesubtitles'] = True
+                base = os.path.splitext(filename)[0]
+                filename = base + ".mp3"
+            session['filename'] = os.path.basename(filename)
+            session['file_path'] = filename
+            session['status'] = 'complete'
+            session['progress'] = 100
+            sz = os.path.getsize(filename)
+            session['filesize'] = f"{sz / (1024*1024):.2f} MiB"
+            return # Success!
 
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                session['title'] = info.get('title', 'Video')
+    except Exception as e:
+        logger.warning(f"Standard download failed, trying Invidious fallback: {e}")
+        
+        # Invidious Fallback Download
+        try:
+            import requests
+            # Re-fetch info from Invidious to get fresh direct link
+            video_id = url.split('v=')[-1].split('&')[0]
+            if 'youtu.be' in url:
+                video_id = url.split('/')[-1]
                 
-                # If we got here, it worked!
-                filename = ydl.prepare_filename(info)
-                if is_audio:
-                    base = os.path.splitext(filename)[0]
-                    filename = base + ".mp3"
-                    
-                session['file_path'] = filename
-                session['filename'] = os.path.basename(filename)
-                
-                if os.path.exists(filename):
-                    session['status'] = 'complete'
-                    session['progress'] = 100
-                    sz = os.path.getsize(filename)
-                    session['filesize'] = f"{sz / (1024*1024):.2f} MiB"
-                    success = True
-                else:
-                    raise Exception("File not found after download")
-
-        except Exception as e:
-            if "Download cancelled" in str(e):
-                session['status'] = 'cancelled'
-                return
+            api_url = f"https://inv.tux.pizza/api/v1/videos/{video_id}"
+            resp = requests.get(api_url, timeout=10)
+            data = resp.json()
             
-            logger.warning(f"Download failed with client {client}: {e}")
-            last_error = e
-            # reset progress for next attempt
-            session['progress'] = 0
-            time.sleep(1)
+            session['title'] = data['title']
+            
+            # Find the requested format URL
+            target_url = None
+            if is_audio:
+                 # Find best audio
+                 audio_streams = [f for f in data.get('adaptiveFormats', []) if 'audio' in f.get('type', '')]
+                 if audio_streams:
+                     target_url = audio_streams[-1]['url'] # Usually highest bitrate is last
+            else:
+                 # Find matching resolution or best video
+                 streams = data.get('formatStreams', [])
+                 if not streams:
+                     streams = data.get('adaptiveFormats', [])
+                 
+                 # Simple logic: pick the first one that matches the requested resolution or just the best one
+                 # This is a fallback, so perfect resolution matching is secondary to "it working"
+                 target_url = streams[0]['url'] if streams else None
 
-    if not success:
-        session['status'] = 'error'
-        session['error'] = str(last_error)
+            if not target_url:
+                raise Exception("No download URL found in Invidious API")
+                
+            # Download using requests
+            filename = f"{data['title'][:50]}.{'mp3' if is_audio else 'mp4'}" # Simple sanitize
+            filename = "".join([c for c in filename if c.isalpha() or c.isdigit() or c in ' .-_']).strip()
+            filepath = os.path.join(DOWNLOAD_FOLDER, filename)
+            
+            session['filename'] = filename
+            session['file_path'] = filepath
+            
+            with requests.get(target_url, stream=True) as r:
+                r.raise_for_status()
+                total_length = int(r.headers.get('content-length', 0))
+                dl = 0
+                with open(filepath, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        if session['cancel_event'].is_set():
+                             raise Exception("Cancelled")
+                        if chunk: 
+                            f.write(chunk)
+                            dl += len(chunk)
+                            if total_length > 0:
+                                session['progress'] = (dl / total_length) * 100
+                                session['downloaded'] = f"{dl / (1024*1024):.1f} MiB"
+                                
+            session['status'] = 'complete'
+            session['progress'] = 100
+            session['filesize'] = f"{os.path.getsize(filepath) / (1024*1024):.2f} MiB"
+            
+        except Exception as e2:
+            logger.error(f"Invidious download failed: {e2}")
+            session['status'] = 'error'
+            session['error'] = f"All methods failed. Server: {str(e)} | Proxy: {str(e2)}"
 
 @app.route('/download', methods=['POST'])
 def start_download():
