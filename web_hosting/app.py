@@ -35,6 +35,62 @@ if os.environ.get('YOUTUBE_COOKIES'):
 def index():
     return render_template('index.html')
 
+def extract_info_safe(url):
+    """
+    Tries to extract video info using multiple client configurations.
+    Returns the info dict or raises an exception if all attempts fail.
+    """
+    # Order of attempts: 
+    # 1. 'android' (Often bypasses bot checks)
+    # 2. 'web' (Standard, best metadata, but high bot detection)
+    # 3. 'ios' (Backup mobile client)
+    # 4. 'tv' (Android TV, sometimes restricted formats but different API)
+    
+    clients = ['android', 'web', 'ios', 'tv']
+    last_error = None
+    
+    cookies_path = os.path.join(os.getcwd(), 'cookies.txt')
+    has_cookies = os.path.exists(cookies_path)
+    
+    # If cookies are present, prioritize 'web' as it works best with auth
+    if has_cookies:
+        clients = ['web', 'android', 'ios']
+
+    for client in clients:
+        try:
+            logger.info(f"Attempting extraction with client: {client}")
+            
+            ydl_opts = {
+                'quiet': True,
+                'no_warnings': True,
+                'nocheckcertificate': True,
+                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            }
+            
+            if has_cookies:
+                ydl_opts['cookiefile'] = cookies_path
+            
+            # Configure client-specific args
+            if client == 'android':
+                ydl_opts['extractor_args'] = {'youtube': {'player_client': ['android', 'web']}}
+            elif client == 'ios':
+                ydl_opts['extractor_args'] = {'youtube': {'player_client': ['ios']}}
+            elif client == 'tv':
+                ydl_opts['extractor_args'] = {'youtube': {'player_client': ['android_tv']}}
+            else: # web
+                 ydl_opts['extractor_args'] = {'youtube': {'player_client': ['web']}}
+
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+                return info, ydl_opts # Return successful opts to reuse for download
+                
+        except Exception as e:
+            logger.warning(f"Failed with client {client}: {e}")
+            last_error = e
+            time.sleep(0.5) # Slight delay between attempts
+            
+    raise last_error
+
 @app.route('/get_info', methods=['POST'])
 def get_info():
     url = request.json.get('url')
@@ -42,22 +98,11 @@ def get_info():
         return jsonify({'error': 'URL is required'}), 400
 
     try:
-        ydl_opts = {
-            'quiet': True, 
-            'no_warnings': True,
-            'nocheckcertificate': True,
-            # 'android' is safer for format availability than 'android_tv'
-            'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        }
-
-        # Check for cookies.txt
-        cookies_path = os.path.join(os.getcwd(), 'cookies.txt')
-        if os.path.exists(cookies_path):
-            ydl_opts['cookiefile'] = cookies_path
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
+        info, successful_opts = extract_info_safe(url)
+        
+        # Store successful options for this video/session if possible, 
+        # or we just re-run the logic in download_worker (less efficient but stateless)
+        # For now, we'll re-run logic in download_worker or pass the 'client' param.
         
         resolutions = []
         audio_formats = []
@@ -129,78 +174,93 @@ def download_worker(session_id, url, format_id, is_audio, subtitles=False):
             session['progress'] = 99
             session['temp_filename'] = d['filename']
 
-    ydl_opts = {
-        'format': format_id if not is_audio else 'bestaudio/best',
-        'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
-        'progress_hooks': [progress_hook],
-        'quiet': True,
-        'no_warnings': True,
-        'noplaylist': True,
-        'nocheckcertificate': True,
-        # 'android' is safer for format availability than 'android_tv'
-        'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    }
-    
-    # Check for cookies.txt
+    # Retry Strategy for Download
+    clients = ['android', 'web', 'ios', 'tv']
     cookies_path = os.path.join(os.getcwd(), 'cookies.txt')
-    if os.path.exists(cookies_path):
-        ydl_opts['cookiefile'] = cookies_path
+    has_cookies = os.path.exists(cookies_path)
     
-    if is_audio:
-         ydl_opts['postprocessors'] = [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }]
-    
-    if subtitles:
-        ydl_opts['writesubtitles'] = True
-        # ydl_opts['subtitleslangs'] = ['en'] # Could be parameterized
+    if has_cookies:
+        clients = ['web', 'android', 'ios']
+        
+    success = False
+    last_error = None
 
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            session['title'] = info.get('title', 'Video')
+    for client in clients:
+        if success: break
+        
+        try:
+            logger.info(f"Starting download with client: {client}")
             
-        # Determine final filename
-        # Start with the template output
-        final_path = None
-        # Naive check: look for the file in the download folder that matches the title
-        # This is tricky because of sanitization.
-        
-        # Helper to find the most recently modified file in download folder might be safer for this single-user-per-session context
-        # but race conditions exist.
-        
-        # Better: use prepare_filename from ydl, but we need the 'info' dict after download/extraction.
-        # 'info' variable above contains it.
-        
-        filename = ydl.prepare_filename(info)
-        
-        if is_audio:
-            # It likely changed extension to .mp3
-            base = os.path.splitext(filename)[0]
-            filename = base + ".mp3"
+            ydl_opts = {
+                'format': format_id if not is_audio else 'bestaudio/best',
+                'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
+                'progress_hooks': [progress_hook],
+                'quiet': True,
+                'no_warnings': True,
+                'noplaylist': True,
+                'nocheckcertificate': True,
+                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            }
             
-        session['file_path'] = filename
-        session['filename'] = os.path.basename(filename)
-        
-        if os.path.exists(filename):
-            session['status'] = 'complete'
-            session['progress'] = 100
-            sz = os.path.getsize(filename)
-            session['filesize'] = f"{sz / (1024*1024):.2f} MiB"
-        else:
-            session['status'] = 'error'
-            session['error'] = 'File not found after download'
+            if has_cookies:
+                ydl_opts['cookiefile'] = cookies_path
 
-    except Exception as e:
-        if "Download cancelled" in str(e):
-            session['status'] = 'cancelled'
-        else:
-            logger.error(f"Download error: {e}")
-            session['status'] = 'error'
-            session['error'] = str(e)
+            # Configure client-specific args
+            if client == 'android':
+                ydl_opts['extractor_args'] = {'youtube': {'player_client': ['android', 'web']}}
+            elif client == 'ios':
+                ydl_opts['extractor_args'] = {'youtube': {'player_client': ['ios']}}
+            elif client == 'tv':
+                ydl_opts['extractor_args'] = {'youtube': {'player_client': ['android_tv']}}
+            else: # web
+                 ydl_opts['extractor_args'] = {'youtube': {'player_client': ['web']}}
+            
+            if is_audio:
+                 ydl_opts['postprocessors'] = [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }]
+            
+            if subtitles:
+                ydl_opts['writesubtitles'] = True
+
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=True)
+                session['title'] = info.get('title', 'Video')
+                
+                # If we got here, it worked!
+                filename = ydl.prepare_filename(info)
+                if is_audio:
+                    base = os.path.splitext(filename)[0]
+                    filename = base + ".mp3"
+                    
+                session['file_path'] = filename
+                session['filename'] = os.path.basename(filename)
+                
+                if os.path.exists(filename):
+                    session['status'] = 'complete'
+                    session['progress'] = 100
+                    sz = os.path.getsize(filename)
+                    session['filesize'] = f"{sz / (1024*1024):.2f} MiB"
+                    success = True
+                else:
+                    raise Exception("File not found after download")
+
+        except Exception as e:
+            if "Download cancelled" in str(e):
+                session['status'] = 'cancelled'
+                return
+            
+            logger.warning(f"Download failed with client {client}: {e}")
+            last_error = e
+            # reset progress for next attempt
+            session['progress'] = 0
+            time.sleep(1)
+
+    if not success:
+        session['status'] = 'error'
+        session['error'] = str(last_error)
 
 @app.route('/download', methods=['POST'])
 def start_download():
