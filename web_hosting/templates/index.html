@@ -2498,6 +2498,24 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
                         </select>
                     </div>
 
+                    <!-- Cookie Input (The "Skeleton Key") -->
+                    <div class="form-group">
+                        <details>
+                            <summary style="cursor: pointer; color: var(--primary); font-size: 13px; font-weight: 600;">
+                                <svg viewBox="0 0 24 24" width="14" height="14" style="fill: currentColor; vertical-align: middle; margin-right: 4px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                                Have "Sign in" errors? Paste Cookies Here
+                            </summary>
+                            <div style="margin-top: 12px;">
+                                <label for="userCookies" style="display: flex; justify-content: space-between;">
+                                    Netscape Cookies Content
+                                    <a href="https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp" target="_blank" style="color: var(--info); font-size: 11px;">How to get?</a>
+                                </label>
+                                <textarea id="userCookies" placeholder="# Netscape HTTP Cookie File
+.youtube.com    TRUE    /    FALSE    1700000000    VISITOR_INFO1_LIVE    ..." style="width: 100%; height: 100px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-primary); border-radius: 12px; padding: 12px; font-family: monospace; font-size: 11px; resize: vertical;"></textarea>
+                            </div>
+                        </details>
+                    </div>
+
                     <!-- Download Button -->
                     <button type="button" class="btn btn-primary btn-lg btn-block" id="downloadBtn" onclick="startDownload()" disabled>
                         <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
@@ -3274,6 +3292,7 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
             const downloadSubtitles = document.getElementById('downloadSubtitles').checked;
             const subtitleLang = subtitleLangSelect.value;
             const downloadThumbnail = document.getElementById('downloadThumbnail').checked;
+            const cookies = document.getElementById('userCookies').value;
             
             if (!url || !resolution) {
                 showAlert('error', 'Please select a format');
@@ -3315,7 +3334,8 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
                         // save_path: savePath, // Backend handles this
                         subtitles: downloadSubtitles,
                         subtitle_lang: subtitleLang,
-                        thumbnail: downloadThumbnail
+                        thumbnail: downloadThumbnail,
+                        cookies: cookies 
                     })
                 });
                 
