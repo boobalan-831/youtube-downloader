@@ -37,21 +37,10 @@ def index():
 
 def extract_info_safe(url, custom_cookies=None):
     """
-    Robust extraction using the 'ytsearch' trick and optional user-provided cookies.
-    This avoids direct third-party APIs as per user request.
+    Standard extraction using direct URL.
+    Prioritizes Web client + Cookies (if provided) for maximum reliability.
     """
-    # Extract Video ID for the Search Trick
-    video_id = url
-    if 'v=' in url:
-        video_id = url.split('v=')[-1].split('&')[0]
-    elif 'youtu.be' in url:
-        video_id = url.split('/')[-1]
-    
-    # Use Search URL instead of Direct URL (Bypass Trick)
-    # Searching for the ID often lands on a different API endpoint
-    search_query = f"ytsearch1:{video_id}"
-    
-    # Handle Cookies
+    # Handle Cookies (Temp file for this request)
     cookie_file = None
     if custom_cookies:
         cookie_file = os.path.join(DOWNLOAD_FOLDER, f"cookies_{uuid.uuid4()}.txt")
@@ -61,33 +50,48 @@ def extract_info_safe(url, custom_cookies=None):
         cookie_file = os.path.join(os.getcwd(), 'cookies.txt')
 
     try:
-        # We try the 'android' client first as it's the most robust native client
-        logger.info("Attempting extraction via Search API (Android Client)")
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'nocheckcertificate': True,
-            'cachedir': False,
-            'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        }
+        # Configuration:
+        # If we have cookies -> Web Client is King (looks like real browser user)
+        # If no cookies -> Android Client is safer (looks like mobile app)
         
-        if cookie_file:
-            ydl_opts['cookiefile'] = cookie_file
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # Note: extract_info with ytsearch returns a playlist-like object
-            info = ydl.extract_info(search_query, download=False)
-            
-            # Extract the first result
-            if 'entries' in info:
-                info = info['entries'][0]
+        clients = ['web', 'android'] if cookie_file else ['android', 'web']
+        
+        last_error = None
+        
+        for client in clients:
+            try:
+                logger.info(f"Attempting extraction with client: {client}")
                 
-            return info, ydl_opts, cookie_file
+                ydl_opts = {
+                    'quiet': True,
+                    'no_warnings': True,
+                    'nocheckcertificate': True,
+                    'cachedir': False,
+                    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                }
+                
+                if cookie_file:
+                    ydl_opts['cookiefile'] = cookie_file
+                
+                if client == 'android':
+                    ydl_opts['extractor_args'] = {'youtube': {'player_client': ['android']}}
+                else:
+                    # Web client default
+                    ydl_opts['extractor_args'] = {'youtube': {'player_client': ['web']}}
+
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(url, download=False)
+                    return info, ydl_opts, cookie_file
+                    
+            except Exception as e:
+                logger.warning(f"Client {client} failed: {e}")
+                last_error = e
+        
+        raise last_error
 
     except Exception as e:
-        logger.error(f"Search Extraction failed: {e}")
-        # Cleanup temp cookie if we created it
+        logger.error(f"Extraction failed: {e}")
+        # Cleanup temp cookie on failure
         if cookie_file and 'cookies_' in cookie_file and os.path.exists(cookie_file):
             try: os.remove(cookie_file)
             except: pass
@@ -96,13 +100,19 @@ def extract_info_safe(url, custom_cookies=None):
 @app.route('/get_info', methods=['POST'])
 def get_info():
     url = request.json.get('url')
+    cookies = request.json.get('cookies') # Receive cookies from frontend
+    
     if not url:
         return jsonify({'error': 'URL is required'}), 400
 
     try:
-        # We don't accept custom cookies in get_info yet to keep UI simple, 
-        # but we could add it if the user wants "preview" to work on restricted videos.
-        info, _, _ = extract_info_safe(url)
+        info, _, temp_cookie = extract_info_safe(url, cookies)
+        
+        # We clean up the temp cookie for get_info immediately as we don't need it persisted
+        # (It will be re-created during download)
+        if temp_cookie and 'cookies_' in temp_cookie and os.path.exists(temp_cookie):
+             try: os.remove(temp_cookie)
+             except: pass
         
         resolutions = []
         audio_formats = []

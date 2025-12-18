@@ -3202,6 +3202,7 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
 
         async function fetchInfo() {
             const url = urlInput.value.trim();
+            const cookies = document.getElementById('userCookies').value;
             
             if (!url) {
                 showAlert('error', 'Please enter a YouTube URL');
@@ -3221,7 +3222,7 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
                 const response = await fetch('/get_info', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url })
+                    body: JSON.stringify({ url, cookies })
                 });
                 
                 const data = await response.json();
