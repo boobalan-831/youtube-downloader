@@ -25,6 +25,12 @@ if os.path.exists('./ffmpeg'):
     # Add current directory to PATH so yt-dlp can find it
     os.environ['PATH'] += os.pathsep + os.getcwd()
 
+# Handle Cookies from Environment Variable (for Render/Cloud deployment)
+if os.environ.get('YOUTUBE_COOKIES'):
+    with open('cookies.txt', 'w') as f:
+        f.write(os.environ['YOUTUBE_COOKIES'])
+    logger.info("Loaded cookies.txt from environment variable")
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -40,8 +46,8 @@ def get_info():
             'quiet': True, 
             'no_warnings': True,
             'nocheckcertificate': True,
-            # Stealth options
-            'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
+            # 'android_tv' is often less throttled/blocked than 'android' or 'web' on datacenter IPs
+            'extractor_args': {'youtube': {'player_client': ['android_tv', 'android', 'ios']}},
             'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         }
 
@@ -131,8 +137,8 @@ def download_worker(session_id, url, format_id, is_audio, subtitles=False):
         'no_warnings': True,
         'noplaylist': True,
         'nocheckcertificate': True,
-        # Stealth options
-        'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
+        # 'android_tv' is often less throttled/blocked than 'android' or 'web' on datacenter IPs
+        'extractor_args': {'youtube': {'player_client': ['android_tv', 'android', 'ios']}},
         'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     }
     
