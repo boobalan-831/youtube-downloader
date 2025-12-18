@@ -46,8 +46,8 @@ def get_info():
             'quiet': True, 
             'no_warnings': True,
             'nocheckcertificate': True,
-            # 'android_tv' is often less throttled/blocked than 'android' or 'web' on datacenter IPs
-            'extractor_args': {'youtube': {'player_client': ['android_tv', 'android', 'ios']}},
+            # 'android' is safer for format availability than 'android_tv'
+            'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
             'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         }
 
@@ -137,8 +137,8 @@ def download_worker(session_id, url, format_id, is_audio, subtitles=False):
         'no_warnings': True,
         'noplaylist': True,
         'nocheckcertificate': True,
-        # 'android_tv' is often less throttled/blocked than 'android' or 'web' on datacenter IPs
-        'extractor_args': {'youtube': {'player_client': ['android_tv', 'android', 'ios']}},
+        # 'android' is safer for format availability than 'android_tv'
+        'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
         'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     }
     
