@@ -37,100 +37,135 @@ def index():
 
 def extract_info_safe(url):
     """
-    Robust extraction with Invidious Fallback.
+    Robust extraction with Multi-Provider Fallback:
+    1. yt-dlp (Direct with Stealth/Cookies)
+    2. Cobalt API (External Service)
+    3. Invidious API (Instance Rotation)
     """
+    import requests
+    
+    # --- Attempt 1: Standard yt-dlp (Web/Android/iOS) ---
     cookies_path = os.path.join(os.getcwd(), 'cookies.txt')
     has_cookies = os.path.exists(cookies_path)
     
+    clients = ['android', 'web', 'ios']
     if has_cookies:
+        clients = ['web', 'android'] # Web is best with cookies
+
+    for client in clients:
         try:
-            with open(cookies_path, 'r') as f:
-                content = f.read(20)
-                logger.info(f"Cookies found: {content}...")
-        except:
-            pass
-
-    # Attempt 1: Standard yt-dlp (Web Client)
-    # This works best if cookies are present.
-    try:
-        logger.info("Attempt 1: Standard Web Client")
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'nocheckcertificate': True,
-            'cachedir': False, # Disable cache to prevent stale bot-checks
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        }
-        if has_cookies:
-            ydl_opts['cookiefile'] = cookies_path
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            return info, ydl_opts
-    except Exception as e:
-        logger.warning(f"Web Client failed: {e}")
-
-    # Attempt 2: Android Client (Bypass for some IPs)
-    try:
-        logger.info("Attempt 2: Android Client")
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'nocheckcertificate': True,
-            'cachedir': False,
-            'extractor_args': {'youtube': {'player_client': ['android']}},
-        }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            return info, ydl_opts
-    except Exception as e:
-        logger.warning(f"Android Client failed: {e}")
-
-    # Attempt 3: Invidious Fallback (Proxy Metadata)
-    # If our IP is banned, we ask a public Invidious instance for the info.
-    try:
-        logger.info("Attempt 3: Invidious API Fallback")
-        # Extract video ID
-        video_id = url.split('v=')[-1].split('&')[0]
-        if 'youtu.be' in url:
-            video_id = url.split('/')[-1]
+            logger.info(f"Attempt 1: yt-dlp with client {client}")
+            ydl_opts = {
+                'quiet': True,
+                'no_warnings': True,
+                'nocheckcertificate': True,
+                'cachedir': False,
+                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            }
+            if has_cookies:
+                ydl_opts['cookiefile'] = cookies_path
             
-        import requests
-        # Using a reliable Invidious instance
-        api_url = f"https://inv.tux.pizza/api/v1/videos/{video_id}"
-        resp = requests.get(api_url, timeout=10)
+            if client == 'android':
+                ydl_opts['extractor_args'] = {'youtube': {'player_client': ['android']}}
+            elif client == 'ios':
+                ydl_opts['extractor_args'] = {'youtube': {'player_client': ['ios']}}
+            
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+                return info, ydl_opts
+        except Exception as e:
+            logger.warning(f"yt-dlp {client} failed: {e}")
+
+    # --- Attempt 2: Cobalt API (Strong Backup) ---
+    try:
+        logger.info("Attempt 2: Cobalt API")
+        # Cobalt is a powerful downloader API that handles the hard work
+        cobalt_headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+        cobalt_data = {
+            'url': url,
+            'vCodec': 'h264',
+            'vQuality': '1080',
+            'aFormat': 'mp3',
+            'isAudioOnly': False
+        }
+        
+        # We use a public instance or the main one
+        resp = requests.post('https://api.cobalt.tools/api/json', headers=cobalt_headers, json=cobalt_data, timeout=15)
+        
         if resp.status_code == 200:
             data = resp.json()
-            # Map Invidious data to yt-dlp format
-            formats = []
-            for f in data.get('formatStreams', []) + data.get('adaptiveFormats', []):
-                formats.append({
-                    'format_id': f.get('itag'),
-                    'url': f.get('url'),
-                    'ext': f.get('container'),
-                    'vcodec': f.get('encoding'),
-                    'acodec': f.get('audioEncoding'),
-                    'height': f.get('resolution', '').replace('p', '') if f.get('resolution') else None,
-                    'width': None
-                })
-            
-            info = {
-                'id': data['videoId'],
-                'title': data['title'],
-                'thumbnail': data['videoThumbnails'][0]['url'] if data.get('videoThumbnails') else None,
-                'uploader': data['author'],
-                'duration': data['lengthSeconds'],
-                'view_count': data['viewCount'],
-                'upload_date': data['publishedText'], # Approximation
-                'formats': formats
-            }
-            # We return empty opts because we can't use yt-dlp to download 
-            # using standard extractors if we used Invidious. 
-            # We will handle this in download_worker.
-            return info, {'fallback_source': 'invidious'}
-            
+            if 'url' in data:
+                # Map Cobalt response to our info format
+                # Cobalt doesn't give full metadata always, but gives a working link
+                info = {
+                    'id': 'cobalt_video',
+                    'title': 'YouTube Video (via Cobalt)',
+                    'thumbnail': None,
+                    'uploader': 'YouTube',
+                    'duration': 0,
+                    'view_count': 0,
+                    'upload_date': None,
+                    'formats': [{
+                        'format_id': 'cobalt',
+                        'url': data['url'],
+                        'ext': 'mp4',
+                        'vcodec': 'h264',
+                        'acodec': 'mp3',
+                        'height': 1080
+                    }]
+                }
+                return info, {'fallback_source': 'cobalt', 'direct_url': data['url']}
     except Exception as e:
-        logger.warning(f"Invidious Fallback failed: {e}")
+        logger.warning(f"Cobalt API failed: {e}")
+
+    # --- Attempt 3: Invidious Instance Rotation ---
+    invidious_instances = [
+        "https://inv.tux.pizza",
+        "https://vid.puffyan.us",
+        "https://invidious.projectsegfau.lt",
+        "https://invidious.fdn.fr"
+    ]
+    
+    for instance in invidious_instances:
+        try:
+            logger.info(f"Attempt 3: Invidious API ({instance})")
+            video_id = url.split('v=')[-1].split('&')[0]
+            if 'youtu.be' in url:
+                video_id = url.split('/')[-1]
+                
+            api_url = f"{instance}/api/v1/videos/{video_id}"
+            resp = requests.get(api_url, timeout=10)
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                formats = []
+                for f in data.get('formatStreams', []) + data.get('adaptiveFormats', []):
+                    formats.append({
+                        'format_id': f.get('itag'),
+                        'url': f.get('url'),
+                        'ext': f.get('container'),
+                        'vcodec': f.get('encoding'),
+                        'acodec': f.get('audioEncoding'),
+                        'height': f.get('resolution', '').replace('p', '') if f.get('resolution') else None
+                    })
+                
+                info = {
+                    'id': data['videoId'],
+                    'title': data['title'],
+                    'thumbnail': data['videoThumbnails'][0]['url'] if data.get('videoThumbnails') else None,
+                    'uploader': data['author'],
+                    'duration': data['lengthSeconds'],
+                    'view_count': data['viewCount'],
+                    'upload_date': data['publishedText'],
+                    'formats': formats
+                }
+                return info, {'fallback_source': 'invidious'}
+        except Exception as e:
+            logger.warning(f"Invidious ({instance}) failed: {e}")
 
     raise Exception("All extraction methods failed. Server IP may be blocked by YouTube.")
 
@@ -260,44 +295,107 @@ def download_worker(session_id, url, format_id, is_audio, subtitles=False):
             return # Success!
 
     except Exception as e:
-        logger.warning(f"Standard download failed, trying Invidious fallback: {e}")
+        logger.warning(f"Standard download failed, trying fallbacks: {e}")
         
-        # Invidious Fallback Download
+        # Check if we have a direct Cobalt URL ready
+        # We need to retrieve the info/opts passed or re-run extract_info_safe?
+        # Since download_worker is separate, we re-run logic mostly or rely on what we can do.
+        # But actually, download_worker is called AFTER get_info.
+        # Ideally, we should pass the 'fallback_source' to download_worker.
+        # But here we will just implement the same fallback logic: Try Cobalt, then Invidious.
+        
+        import requests
+        
+        # --- Fallback 1: Cobalt API ---
         try:
-            import requests
-            # Re-fetch info from Invidious to get fresh direct link
-            video_id = url.split('v=')[-1].split('&')[0]
-            if 'youtu.be' in url:
-                video_id = url.split('/')[-1]
-                
-            api_url = f"https://inv.tux.pizza/api/v1/videos/{video_id}"
-            resp = requests.get(api_url, timeout=10)
-            data = resp.json()
+            logger.info("Fallback 1: Cobalt API")
+            cobalt_headers = {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+            cobalt_data = {
+                'url': url,
+                'vCodec': 'h264',
+                'vQuality': '1080',
+                'aFormat': 'mp3',
+                'isAudioOnly': is_audio
+            }
+            resp = requests.post('https://api.cobalt.tools/api/json', headers=cobalt_headers, json=cobalt_data, timeout=15)
+            if resp.status_code == 200:
+                data = resp.json()
+                if 'url' in data:
+                    target_url = data['url']
+                    session['title'] = 'YouTube Video (via Cobalt)'
+                    
+                    filename = f"video_download.{'mp3' if is_audio else 'mp4'}"
+                    filepath = os.path.join(DOWNLOAD_FOLDER, filename)
+                    session['filename'] = filename
+                    session['file_path'] = filepath
+                    
+                    with requests.get(target_url, stream=True) as r:
+                        r.raise_for_status()
+                        total_length = int(r.headers.get('content-length', 0))
+                        dl = 0
+                        with open(filepath, 'wb') as f:
+                            for chunk in r.iter_content(chunk_size=8192):
+                                if session['cancel_event'].is_set(): raise Exception("Cancelled")
+                                if chunk: 
+                                    f.write(chunk)
+                                    dl += len(chunk)
+                                    if total_length > 0:
+                                        session['progress'] = (dl / total_length) * 100
+                                        session['downloaded'] = f"{dl / (1024*1024):.1f} MiB"
+                    
+                    session['status'] = 'complete'
+                    session['progress'] = 100
+                    session['filesize'] = f"{os.path.getsize(filepath) / (1024*1024):.2f} MiB"
+                    return
+        except Exception as ec:
+             logger.warning(f"Cobalt fallback failed: {ec}")
+
+        # --- Fallback 2: Invidious Rotation ---
+        try:
+            logger.info("Fallback 2: Invidious Rotation")
+            invidious_instances = [
+                "https://inv.tux.pizza",
+                "https://vid.puffyan.us",
+                "https://invidious.projectsegfau.lt",
+                "https://invidious.fdn.fr"
+            ]
             
-            session['title'] = data['title']
-            
-            # Find the requested format URL
             target_url = None
-            if is_audio:
-                 # Find best audio
-                 audio_streams = [f for f in data.get('adaptiveFormats', []) if 'audio' in f.get('type', '')]
-                 if audio_streams:
-                     target_url = audio_streams[-1]['url'] # Usually highest bitrate is last
-            else:
-                 # Find matching resolution or best video
-                 streams = data.get('formatStreams', [])
-                 if not streams:
-                     streams = data.get('adaptiveFormats', [])
-                 
-                 # Simple logic: pick the first one that matches the requested resolution or just the best one
-                 # This is a fallback, so perfect resolution matching is secondary to "it working"
-                 target_url = streams[0]['url'] if streams else None
+            
+            # Find a working instance
+            for instance in invidious_instances:
+                try:
+                    video_id = url.split('v=')[-1].split('&')[0]
+                    if 'youtu.be' in url:
+                        video_id = url.split('/')[-1]
+                        
+                    api_url = f"{instance}/api/v1/videos/{video_id}"
+                    resp = requests.get(api_url, timeout=10)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        session['title'] = data['title']
+                        
+                        if is_audio:
+                             audio_streams = [f for f in data.get('adaptiveFormats', []) if 'audio' in f.get('type', '')]
+                             if audio_streams: target_url = audio_streams[-1]['url']
+                        else:
+                             streams = data.get('formatStreams', [])
+                             if not streams: streams = data.get('adaptiveFormats', [])
+                             if streams: target_url = streams[0]['url']
+                        
+                        if target_url: break
+                except:
+                    continue
 
             if not target_url:
-                raise Exception("No download URL found in Invidious API")
+                raise Exception("No download URL found in any Invidious instance")
                 
             # Download using requests
-            filename = f"{data['title'][:50]}.{'mp3' if is_audio else 'mp4'}" # Simple sanitize
+            filename = f"{session.get('title', 'video')[:50]}.{'mp3' if is_audio else 'mp4'}"
             filename = "".join([c for c in filename if c.isalpha() or c.isdigit() or c in ' .-_']).strip()
             filepath = os.path.join(DOWNLOAD_FOLDER, filename)
             
