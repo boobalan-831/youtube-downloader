@@ -3,10 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Downloader Pro</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <title>YT Downloader</title>
     <style>
         * {
             margin: 0;
@@ -15,763 +12,125 @@
         }
 
         :root {
-            --primary: #ff0033;
-            --primary-dark: #cc0029;
-            --primary-light: #ff3366;
-            --primary-glow: rgba(255, 0, 51, 0.4);
-            --accent: #ff6b00;
-            --accent-secondary: #a855f7;
-            --bg-dark: #050508;
-            --bg-card: rgba(18, 18, 24, 0.8);
-            --bg-card-solid: #121218;
-            --bg-input: rgba(30, 30, 40, 0.9);
-            --bg-hover: rgba(50, 50, 65, 0.8);
-            --bg-glass: rgba(255, 255, 255, 0.03);
-            --text-primary: #ffffff;
-            --text-secondary: #a0a0b0;
-            --text-muted: #555566;
-            --border: rgba(255, 255, 255, 0.08);
-            --border-light: rgba(255, 255, 255, 0.12);
-            --success: #00d97e;
-            --success-glow: rgba(0, 217, 126, 0.3);
-            --error: #ff4757;
-            --warning: #ffb800;
-            --info: #00b4ff;
-            --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-            --gradient-card: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-            --gradient-glow: radial-gradient(ellipse at 50% 0%, var(--primary-glow) 0%, transparent 60%);
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-            --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.4);
-            --shadow-lg: 0 16px 64px rgba(0, 0, 0, 0.5);
-            --shadow-glow: 0 0 40px var(--primary-glow);
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #111111;
+            --bg-tertiary: #1a1a1a;
+            --bg-input: #141414;
+            --text-primary: #e5e5e5;
+            --text-secondary: #888888;
+            --text-muted: #555555;
+            --border: #222222;
+            --border-hover: #333333;
+            --accent: #ffffff;
+            --success: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-dark);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
             color: var(--text-primary);
             min-height: 100vh;
-            line-height: 1.6;
-            overflow-x: hidden;
+            line-height: 1.5;
         }
 
-        /* Animated Background */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 100vh;
-            background: 
-                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 0, 51, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse 60% 40% at 80% 50%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse 60% 40% at 20% 80%, rgba(255, 107, 0, 0.08) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* Noise Texture Overlay */
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
-            opacity: 0.03;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* Layout */
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            position: relative;
-            z-index: 1;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 40px 24px;
-            max-width: 920px;
+        .container {
+            max-width: 720px;
             margin: 0 auto;
-            width: 100%;
+            padding: 40px 20px;
         }
 
-        /* ========== CREATIVE HEADER ========== */
+        /* Header */
         header {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            padding: 0;
-            background: transparent;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .header-wrapper {
-            background: linear-gradient(135deg, rgba(10, 10, 15, 0.97) 0%, rgba(20, 15, 25, 0.95) 100%);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Animated gradient line at top */
-        .header-wrapper::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, 
-                var(--primary) 0%, 
-                var(--accent) 25%, 
-                var(--accent-secondary) 50%, 
-                var(--accent) 75%, 
-                var(--primary) 100%);
-            background-size: 200% 100%;
-            animation: gradient-flow 3s linear infinite;
-        }
-
-        @keyframes gradient-flow {
-            0% { background-position: 0% 0; }
-            100% { background-position: 200% 0; }
-        }
-
-        /* Floating orbs in header */
-        .header-orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(40px);
-            opacity: 0.4;
-            pointer-events: none;
-        }
-
-        .header-orb-1 {
-            width: 150px;
-            height: 150px;
-            background: var(--primary);
-            top: -60px;
-            left: 10%;
-            animation: float-orb 6s ease-in-out infinite;
-        }
-
-        .header-orb-2 {
-            width: 100px;
-            height: 100px;
-            background: var(--accent-secondary);
-            top: -30px;
-            right: 15%;
-            animation: float-orb 8s ease-in-out infinite reverse;
-        }
-
-        .header-orb-3 {
-            width: 80px;
-            height: 80px;
-            background: var(--accent);
-            top: -20px;
-            right: 40%;
-            animation: float-orb 5s ease-in-out infinite 1s;
-        }
-
-        @keyframes float-orb {
-            0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(10px) scale(1.1); }
-        }
-
-        .header-content {
-            max-width: 920px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 20px 24px;
-            position: relative;
-            z-index: 2;
-        }
-
-        /* Creative Logo Section */
         .logo {
             display: flex;
             align-items: center;
-            gap: 16px;
-            position: relative;
-        }
-
-        .logo-container {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Rotating ring around logo */
-        .logo-ring {
-            position: absolute;
-            width: 58px;
-            height: 58px;
-            border: 2px solid transparent;
-            border-top-color: var(--primary);
-            border-right-color: var(--accent);
-            border-radius: 50%;
-            animation: spin-slow 4s linear infinite;
-        }
-
-        .logo-ring-2 {
-            position: absolute;
-            width: 66px;
-            height: 66px;
-            border: 1px solid transparent;
-            border-bottom-color: var(--accent-secondary);
-            border-left-color: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            animation: spin-slow 6s linear infinite reverse;
-        }
-
-        @keyframes spin-slow {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            gap: 12px;
         }
 
         .logo-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #1a1a24 0%, #0d0d12 100%);
-            border-radius: 14px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
-            z-index: 2;
-            box-shadow: 
-                0 0 20px rgba(255, 0, 51, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            overflow: hidden;
-        }
-
-        .logo-icon::before {
-            content: '';
-            position: absolute;
-            inset: 1px;
-            background: linear-gradient(135deg, rgba(255, 0, 51, 0.2) 0%, transparent 50%, rgba(168, 85, 247, 0.1) 100%);
-            border-radius: 13px;
-        }
-
-        /* Pulsing glow behind logo */
-        .logo-icon::after {
-            content: '';
-            position: absolute;
-            inset: -4px;
-            background: var(--gradient-primary);
-            border-radius: 18px;
-            z-index: -1;
-            opacity: 0.5;
-            animation: pulse-glow 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse-glow {
-            0%, 100% { opacity: 0.3; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(1.05); }
         }
 
         .logo-icon svg {
-            width: 26px;
-            height: 26px;
-            fill: white;
-            position: relative;
-            z-index: 1;
-            filter: drop-shadow(0 0 8px rgba(255, 0, 51, 0.5));
+            width: 24px;
+            height: 24px;
+            fill: var(--text-primary);
         }
 
-        /* Brand text section */
-        .brand {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .brand-name {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .brand-name h1 {
-            font-size: 20px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 50%, #ffffff 100%);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: shine-text 3s linear infinite;
-        }
-
-        @keyframes shine-text {
-            0% { background-position: 0% center; }
-            100% { background-position: 200% center; }
-        }
-
-        .brand-badge {
-            font-size: 9px;
-            font-weight: 800;
-            color: white;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-            padding: 4px 10px;
-            border-radius: 6px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            box-shadow: 
-                0 2px 10px rgba(255, 0, 51, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .brand-badge::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: badge-shine 2s ease-in-out infinite;
-        }
-
-        @keyframes badge-shine {
-            0% { left: -100%; }
-            50%, 100% { left: 100%; }
-        }
-
-        .brand-tagline {
-            font-size: 11px;
-            color: var(--text-muted);
-            font-weight: 500;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .brand-tagline::before {
-            content: '';
-            width: 12px;
-            height: 1px;
-            background: linear-gradient(90deg, var(--primary), transparent);
-        }
-
-        /* Status indicator */
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            background: var(--success);
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 6px;
-            animation: pulse-dot 1.5s ease-in-out infinite;
-            box-shadow: 0 0 8px var(--success);
-        }
-
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.8); }
-        }
-
-        /* Header actions */
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .header-stats {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding-right: 16px;
-            border-right: 1px solid var(--border);
-        }
-
-        .stat-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-        }
-
-        .stat-value {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .stat-label {
-            font-size: 9px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .action-btn {
-            width: 40px;
-            height: 40px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .action-btn::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: var(--gradient-primary);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .action-btn:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(255, 0, 51, 0.2);
-        }
-
-        .action-btn:hover::before {
-            opacity: 0.1;
-        }
-
-        .action-btn svg {
-            width: 18px;
-            height: 18px;
-            fill: var(--text-secondary);
-            position: relative;
-            z-index: 1;
-            transition: fill 0.3s;
-        }
-
-        .action-btn:hover svg {
-            fill: var(--primary);
-        }
-
-        /* Mobile responsive header */
-        @media (max-width: 640px) {
-            .header-stats {
-                display: none;
-            }
-            
-            .brand-tagline {
-                display: none;
-            }
-            
-            .logo-ring, .logo-ring-2 {
-                display: none;
-            }
-            
-            .header-orb {
-                opacity: 0.2;
-            }
-        }
-
-        /* ========== DRAG & DROP ZONE ========== */
-        .drop-zone-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(5, 5, 8, 0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            z-index: 9999;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .drop-zone-overlay.active {
-            display: flex;
-            opacity: 1;
-        }
-
-        .drop-zone-content {
-            text-align: center;
-            animation: drop-zone-pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes drop-zone-pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-
-        .drop-zone-box {
-            width: 400px;
-            height: 300px;
-            border: 3px dashed var(--primary);
-            border-radius: 24px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 24px;
-            background: linear-gradient(135deg, rgba(255, 0, 51, 0.05) 0%, rgba(255, 107, 0, 0.05) 100%);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .drop-zone-box::before {
-            content: '';
-            position: absolute;
-            inset: -50%;
-            background: conic-gradient(from 0deg, transparent, var(--primary-glow), transparent, var(--accent-secondary), transparent);
-            animation: rotate-glow 4s linear infinite;
-            opacity: 0.3;
-        }
-
-        @keyframes rotate-glow {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .drop-zone-box::after {
-            content: '';
-            position: absolute;
-            inset: 3px;
-            background: var(--bg-dark);
-            border-radius: 21px;
-            z-index: 0;
-        }
-
-        .drop-zone-icon {
-            width: 80px;
-            height: 80px;
-            background: var(--gradient-primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            z-index: 1;
-            box-shadow: 0 0 40px var(--primary-glow);
-            animation: bounce-icon 1s ease-in-out infinite;
-        }
-
-        @keyframes bounce-icon {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .drop-zone-icon svg {
-            width: 40px;
-            height: 40px;
-            fill: white;
-        }
-
-        .drop-zone-text {
-            position: relative;
-            z-index: 1;
-        }
-
-        .drop-zone-text h2 {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .drop-zone-text p {
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-
-        .drop-zone-hint {
-            margin-top: 32px;
-            padding: 16px 24px;
-            background: var(--bg-card);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .drop-zone-hint svg {
-            width: 20px;
-            height: 20px;
-            fill: var(--info);
-        }
-
-        .drop-zone-hint span {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        /* URL Input drag highlight */
-        .url-input-wrapper {
-            position: relative;
-            transition: all 0.3s ease;
-        }
-
-        .url-input-wrapper.drag-hover {
-            transform: scale(1.02);
-        }
-
-        .url-input-wrapper.drag-hover input {
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 0 4px var(--primary-glow), 0 0 30px var(--primary-glow) !important;
-        }
-
-        .url-input-wrapper.drag-hover::after {
-            content: 'Drop here!';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--gradient-primary);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 12px;
+        .logo h1 {
+            font-size: 18px;
             font-weight: 600;
-            z-index: 10;
-            animation: pulse-drop 0.5s ease-in-out infinite alternate;
+            letter-spacing: -0.3px;
         }
 
-        @keyframes pulse-drop {
-            from { opacity: 0.8; }
-            to { opacity: 1; }
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Premium Cards */
+        /* Cards */
         .card {
-            background: var(--bg-card);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 28px;
-            margin-bottom: 24px;
+            background: var(--bg-secondary);
             border: 1px solid var(--border);
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: var(--gradient-card);
-            pointer-events: none;
-        }
-
-        .card:hover {
-            border-color: var(--border-light);
-            box-shadow: var(--shadow-md);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
         }
 
         .card-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 24px;
-            position: relative;
+            margin-bottom: 16px;
         }
 
         .card-title {
-            font-size: 15px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: var(--text-secondary);
         }
 
-        .card-title svg {
-            width: 20px;
-            height: 20px;
-            fill: var(--primary);
-        }
-
-        /* Premium Form Elements */
-        .form-group {
-            margin-bottom: 24px;
-            position: relative;
-        }
-
-        .form-group:last-child {
-            margin-bottom: 0;
-        }
-
+        /* Form Elements */
         label {
             display: block;
             font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 10px;
+            font-weight: 500;
             color: var(--text-secondary);
+            margin-bottom: 8px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .input-wrapper {
-            position: relative;
+            letter-spacing: 0.3px;
         }
 
         input[type="text"],
         select {
             width: 100%;
-            padding: 16px 20px;
+            padding: 12px 14px;
             background: var(--bg-input);
             border: 1px solid var(--border);
-            border-radius: 14px;
+            border-radius: 6px;
             color: var(--text-primary);
-            font-size: 15px;
+            font-size: 14px;
             font-family: inherit;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: border-color 0.15s;
         }
 
         input[type="text"]:hover,
         select:hover {
-            border-color: var(--border-light);
-            background: var(--bg-hover);
+            border-color: var(--border-hover);
         }
 
         input[type="text"]:focus,
         select:focus {
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px var(--primary-glow), var(--shadow-sm);
-            background: var(--bg-hover);
+            border-color: var(--text-muted);
         }
 
         input[type="text"]::placeholder {
@@ -781,1229 +140,362 @@
         select {
             cursor: pointer;
             appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23555'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: right 18px center;
-            padding-right: 44px;
+            background-position: right 14px center;
+            padding-right: 36px;
         }
 
         select:disabled {
-            opacity: 0.4;
+            opacity: 0.5;
             cursor: not-allowed;
         }
 
-        .input-with-button {
-            display: flex;
-            gap: 12px;
+        .form-group {
+            margin-bottom: 16px;
         }
 
-        .input-with-button input,
-        .input-with-button select {
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-row input,
+        .input-row select {
             flex: 1;
         }
 
-        /* Premium Checkboxes */
-        .checkbox-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            padding: 14px 18px;
-            background: var(--bg-input);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .checkbox-item::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 100%);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .checkbox-item:hover {
-            border-color: var(--primary);
-            background: var(--bg-hover);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .checkbox-item:hover::before {
-            opacity: 1;
-        }
-
-        .checkbox-item input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            accent-color: var(--primary);
-            cursor: pointer;
-        }
-
-        .checkbox-item label {
-            margin: 0;
-            cursor: pointer;
-            color: var(--text-primary);
-            font-size: 14px;
-            font-weight: 500;
-            text-transform: none;
-            letter-spacing: 0;
-        }
-
-        /* Premium Buttons */
+        /* Buttons */
         .btn {
-            padding: 14px 28px;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
+            padding: 10px 18px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.15s;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            position: relative;
-            overflow: hidden;
+            gap: 8px;
             font-family: inherit;
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .btn:hover::before {
-            opacity: 1;
-        }
-
-        .btn svg {
-            width: 18px;
-            height: 18px;
-            fill: currentColor;
-        }
-
-        .btn-primary {
-            background: var(--gradient-primary);
-            color: white;
-            box-shadow: 0 4px 20px var(--primary-glow);
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 30px var(--primary-glow), var(--shadow-md);
-        }
-
-        .btn-primary:active:not(:disabled) {
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background: var(--bg-input);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-            background: var(--bg-hover);
-            border-color: var(--border-light);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .btn-ghost {
-            background: transparent;
-            color: var(--text-secondary);
-            padding: 10px;
-            border-radius: 10px;
-        }
-
-        .btn-ghost:hover {
-            background: var(--bg-input);
+            background: var(--bg-tertiary);
             color: var(--text-primary);
         }
 
-        .btn-success {
-            background: linear-gradient(135deg, var(--success), #00b368);
-            color: white;
-            box-shadow: 0 4px 20px var(--success-glow);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, var(--error), #cc3a47);
-            color: white;
+        .btn:hover:not(:disabled) {
+            border-color: var(--border-hover);
+            background: var(--bg-input);
         }
 
         .btn:disabled {
             opacity: 0.4;
             cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
+        }
+
+        .btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .btn-primary {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            border-color: var(--text-primary);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #ffffff;
+            border-color: #ffffff;
+        }
+
+        .btn-danger {
+            color: var(--error);
+            border-color: var(--error);
+            background: transparent;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 12px;
         }
 
         .btn-block {
             width: 100%;
         }
 
-        .btn-lg {
-            padding: 18px 36px;
-            font-size: 16px;
-            border-radius: 14px;
-        }
-
-        .btn-sm {
-            padding: 10px 18px;
-            font-size: 13px;
-        }
-
-        /* Premium Video Preview */
+        /* Video Preview */
         .video-preview {
             display: none;
-            margin-bottom: 24px;
         }
 
         .video-preview.visible {
             display: block;
-            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .video-card {
             display: flex;
-            gap: 24px;
-            padding: 24px;
-            background: var(--bg-input);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .video-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(255,0,51,0.03) 0%, transparent 50%);
-            pointer-events: none;
-        }
-
-        .video-thumbnail-container {
-            position: relative;
-            flex-shrink: 0;
+            gap: 16px;
         }
 
         .video-thumbnail {
-            width: 220px;
-            height: 124px;
-            border-radius: 12px;
+            width: 180px;
+            height: 100px;
             object-fit: cover;
-            box-shadow: var(--shadow-md);
-            transition: transform 0.3s ease;
+            border-radius: 4px;
+            background: var(--bg-tertiary);
+            flex-shrink: 0;
         }
 
-        .video-card:hover .video-thumbnail {
-            transform: scale(1.02);
-        }
-
-        .video-duration-badge {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(4px);
-            color: white;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-        }
-
-        .video-details {
+        .video-info {
             flex: 1;
-            display: flex;
-            flex-direction: column;
+            min-width: 0;
         }
 
         .video-title {
-            font-size: 17px;
-            font-weight: 600;
-            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            line-height: 1.4;
         }
 
         .video-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 20px;
-            font-size: 13px;
+            gap: 12px;
+            font-size: 12px;
             color: var(--text-secondary);
         }
 
         .video-meta-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 6px 12px;
-            background: var(--bg-glass);
-            border-radius: 8px;
-            border: 1px solid var(--border);
+            gap: 4px;
         }
 
         .video-meta-item svg {
             width: 14px;
             height: 14px;
-            fill: var(--primary);
+            fill: var(--text-muted);
         }
 
-        /* Download Options Grid */
-        .options-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        .duration-badge {
+            background: var(--bg-primary);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* Options Card */
+        #optionsCard {
+            display: none;
+        }
+
+        .format-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding: 4px;
+            background: var(--bg-input);
+            border-radius: 6px;
+        }
+
+        .format-tab {
+            flex: 1;
+            padding: 10px 16px;
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .format-tab:hover {
+            color: var(--text-primary);
+        }
+
+        .format-tab.active {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .format-tab svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        /* Checkbox */
+        .checkbox-row {
+            display: flex;
+            flex-wrap: wrap;
             gap: 16px;
         }
 
-        /* Premium Progress Section */
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .checkbox-item span {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Progress */
         .progress-section {
             display: none;
         }
 
         .progress-section.visible {
             display: block;
-            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .progress-card {
-            padding: 24px;
-            background: var(--bg-input);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: var(--gradient-primary);
-            opacity: 0.5;
         }
 
         .progress-header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
+            align-items: center;
+            margin-bottom: 12px;
         }
 
         .progress-title {
-            font-size: 15px;
-            font-weight: 600;
-            display: -webkit-box;
-            -webkit-line-clamp: 1;
-            -webkit-box-orient: vertical;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
             overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 70%;
+        }
+
+        .progress-percentage {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
         }
 
         .progress-bar-container {
-            height: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
             overflow: hidden;
-            margin-bottom: 16px;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 12px;
         }
 
         .progress-bar {
             height: 100%;
-            background: var(--gradient-primary);
-            border-radius: 10px;
             width: 0%;
+            background: var(--text-primary);
+            border-radius: 2px;
             transition: width 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-bar::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255, 255, 255, 0.3),
-                transparent
-            );
-            animation: shimmer 1.5s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
         }
 
         .progress-bar.complete {
-            background: linear-gradient(90deg, var(--success), #00e676);
-        }
-
-        .progress-bar.complete::after {
-            display: none;
+            background: var(--success);
         }
 
         .progress-bar.error {
-            background: linear-gradient(90deg, var(--error), #ff6b6b);
-        }
-
-        .progress-info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .progress-status {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid var(--border);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ========== BATCH URL MODAL ========== */
-        .batch-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .batch-modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .batch-modal {
-            background: var(--bg-card-solid);
-            border-radius: 24px;
-            border: 1px solid var(--border);
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow: hidden;
-            transform: scale(0.9) translateY(20px);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: var(--shadow-lg), 0 0 100px rgba(255, 0, 51, 0.1);
-        }
-
-        .batch-modal-overlay.active .batch-modal {
-            transform: scale(1) translateY(0);
-        }
-
-        .batch-modal-header {
-            padding: 24px 28px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: linear-gradient(135deg, rgba(255, 0, 51, 0.1) 0%, transparent 100%);
-        }
-
-        .batch-modal-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .batch-modal-title svg {
-            width: 24px;
-            height: 24px;
-            fill: var(--primary);
-        }
-
-        .batch-modal-close {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            border: none;
-            background: var(--bg-input);
-            color: var(--text-secondary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-
-        .batch-modal-close:hover {
             background: var(--error);
-            color: white;
         }
 
-        .batch-modal-close svg {
-            width: 18px;
-            height: 18px;
-            fill: currentColor;
-        }
-
-        .batch-modal-body {
-            padding: 28px;
-        }
-
-        .batch-textarea {
-            width: 100%;
-            height: 200px;
-            padding: 16px;
-            background: var(--bg-input);
-            border: 2px dashed var(--border);
-            border-radius: 16px;
-            color: var(--text-primary);
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 13px;
-            line-height: 1.8;
-            resize: none;
-            transition: all 0.3s ease;
-        }
-
-        .batch-textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            border-style: solid;
-            box-shadow: 0 0 0 4px var(--primary-glow);
-        }
-
-        .batch-textarea::placeholder {
-            color: var(--text-muted);
-        }
-
-        .batch-url-count {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 16px;
-            padding: 12px 16px;
-            background: var(--bg-input);
-            border-radius: 12px;
-        }
-
-        .batch-url-count-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .batch-url-count-label svg {
-            width: 16px;
-            height: 16px;
-            fill: var(--info);
-        }
-
-        .batch-url-count-value {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--primary);
-        }
-
-        .batch-modal-footer {
-            padding: 20px 28px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-
-        /* Batch button in URL card */
-        .batch-btn {
-            padding: 14px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .batch-btn:hover {
-            background: var(--bg-hover);
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .batch-btn svg {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
-        }
-
-        /* ========== LIVE PROGRESS RING ========== */
-        .progress-ring-container {
-            position: relative;
-            width: 120px;
-            height: 120px;
-            flex-shrink: 0;
-        }
-
-        .progress-ring {
-            transform: rotate(-90deg);
-        }
-
-        .progress-ring-bg {
-            fill: none;
-            stroke: var(--bg-input);
-            stroke-width: 8;
-        }
-
-        .progress-ring-fill {
-            fill: none;
-            stroke: url(#progressGradient);
-            stroke-width: 8;
-            stroke-linecap: round;
-            stroke-dasharray: 314;
-            stroke-dashoffset: 314;
-            transition: stroke-dashoffset 0.3s ease;
-        }
-
-        .progress-ring-fill.complete {
-            stroke: var(--success);
-        }
-
-        .progress-ring-fill.error {
-            stroke: var(--error);
-        }
-
-        .progress-ring-center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-        }
-
-        .progress-ring-percent {
-            font-size: 28px;
-            font-weight: 800;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 1;
-        }
-
-        .progress-ring-percent.complete {
-            background: linear-gradient(135deg, var(--success), #00e676);
-            -webkit-background-clip: text;
-            background-clip: text;
-        }
-
-        .progress-ring-label {
-            font-size: 10px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 4px;
-        }
-
-        /* Pulsing animation for ring when active */
-        @keyframes ring-pulse {
-            0%, 100% { filter: drop-shadow(0 0 4px var(--primary-glow)); }
-            50% { filter: drop-shadow(0 0 12px var(--primary-glow)); }
-        }
-
-        .progress-ring.active {
-            animation: ring-pulse 1.5s ease-in-out infinite;
-        }
-
-        /* Updated Progress Card with Ring */
-        .progress-card-enhanced {
+        .progress-stats {
             display: flex;
             gap: 24px;
-            align-items: center;
-            padding: 24px;
-            background: var(--bg-input);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-card-enhanced::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: var(--gradient-primary);
-            opacity: 0.5;
-        }
-
-        .progress-details {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .progress-details-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
-
-        .progress-details-title {
-            font-size: 15px;
-            font-weight: 600;
-            display: -webkit-box;
-            -webkit-line-clamp: 1;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .progress-details-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
         }
 
         .progress-stat {
-            background: rgba(0, 0, 0, 0.2);
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .progress-stat-value {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 4px;
-        }
-
-        .progress-stat-label {
-            font-size: 10px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Speed indicator glow */
-        .progress-stat.speed .progress-stat-value {
-            color: var(--info);
-        }
-
-        .progress-stat.eta .progress-stat-value {
-            color: var(--warning);
-        }
-
-        .progress-stat.size .progress-stat-value {
-            color: var(--success);
-        }
-
-        /* Batch Queue Indicator */
-        .batch-queue-indicator {
-            display: none;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(255, 107, 0, 0.1));
-            border-radius: 10px;
-            border: 1px solid rgba(168, 85, 247, 0.3);
-            margin-bottom: 16px;
-        }
-
-        .batch-queue-indicator.visible {
-            display: flex;
-        }
-
-        .batch-queue-indicator svg {
-            width: 16px;
-            height: 16px;
-            fill: var(--accent-secondary);
-        }
-
-        .batch-queue-indicator span {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--accent-secondary);
-        }
-
-        /* ========== TOOLTIPS ========== */
-        [data-tooltip] {
-            position: relative;
-        }
-
-        [data-tooltip]::before {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%) translateY(-5px);
-            padding: 8px 12px;
-            background: var(--bg-card-solid);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-primary);
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s ease;
-            z-index: 100;
-            box-shadow: var(--shadow-md);
-        }
-
-        [data-tooltip]:hover::before {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) translateY(-10px);
-        }
-
-        /* ========== ADDITIONAL POLISH ========== */
-        
-        /* Subtle hover glow on cards */
-        .card:hover::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle at center, rgba(255, 0, 51, 0.03) 0%, transparent 50%);
-            pointer-events: none;
-            opacity: 1;
-        }
-
-        /* Animated gradient border on focus */
-        .batch-textarea:focus {
-            background: linear-gradient(var(--bg-input), var(--bg-input)) padding-box,
-                        linear-gradient(135deg, var(--primary), var(--accent), var(--accent-secondary)) border-box;
-            border: 2px solid transparent;
-        }
-
-        /* Pulse animation for active elements */
-        @keyframes subtle-pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        .btn-primary:not(:disabled):hover {
-            animation: subtle-pulse 2s ease-in-out infinite;
-        }
-
-        /* Success glow animation */
-        @keyframes success-glow {
-            0%, 100% { box-shadow: 0 0 20px var(--success-glow); }
-            50% { box-shadow: 0 0 40px var(--success-glow), 0 0 60px var(--success-glow); }
-        }
-
-        .progress-ring-fill.complete {
-            animation: success-glow 1s ease-in-out;
-        }
-
-        /* Smooth loading skeleton for batch preview */
-        @keyframes skeleton-loading {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-
-        .skeleton {
-            background: linear-gradient(90deg, 
-                var(--bg-input) 0%, 
-                var(--bg-hover) 50%, 
-                var(--bg-input) 100%);
-            background-size: 200% 100%;
-            animation: skeleton-loading 1.5s infinite;
-            border-radius: 8px;
-        }
-
-        /* ========== CELEBRATION ANIMATION ========== */
-        
-        /* Confetti Container */
-        .confetti-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 9999;
-            overflow: hidden;
-        }
-
-        /* Individual Confetti Piece */
-        .confetti {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            opacity: 0;
-        }
-
-        .confetti.active {
-            animation: confetti-fall 3s ease-out forwards;
-        }
-
-        @keyframes confetti-fall {
-            0% {
-                opacity: 1;
-                transform: translateY(0) rotate(0deg) scale(1);
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(100vh) rotate(720deg) scale(0.5);
-            }
-        }
-
-        /* Celebration Modal */
-        .celebration-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9998;
-            backdrop-filter: blur(5px);
-        }
-
-        .celebration-modal.active {
-            display: flex;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .celebration-content {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            border-radius: 24px;
-            padding: 48px;
-            text-align: center;
-            max-width: 450px;
-            border: 2px solid var(--success);
-            box-shadow: 0 0 60px rgba(0, 200, 83, 0.3);
-            animation: celebrate-bounce 0.5s ease;
-        }
-
-        @keyframes celebrate-bounce {
-            0% { transform: scale(0.5); opacity: 0; }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .celebration-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, var(--success), #00e676);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 24px;
-            animation: icon-pulse 1s ease infinite;
-        }
-
-        @keyframes icon-pulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.4); }
-            50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(0, 200, 83, 0); }
-        }
-
-        .celebration-icon svg {
-            width: 40px;
-            height: 40px;
-            fill: white;
-            animation: checkmark 0.5s ease 0.3s both;
-        }
-
-        @keyframes checkmark {
-            0% { transform: scale(0) rotate(-45deg); }
-            50% { transform: scale(1.2) rotate(0deg); }
-            100% { transform: scale(1) rotate(0deg); }
-        }
-
-        .celebration-title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            background: linear-gradient(90deg, var(--success), #00e676, var(--success));
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradient-shift 2s linear infinite;
-        }
-
-        @keyframes gradient-shift {
-            0% { background-position: 0% center; }
-            100% { background-position: 200% center; }
-        }
-
-        .celebration-filename {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-            word-break: break-all;
-            padding: 12px;
-            background: var(--bg-input);
-            border-radius: 8px;
-        }
-
-        .celebration-meta {
-            display: flex;
-            justify-content: center;
-            gap: 24px;
-            margin: 16px 0 24px;
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-
-        .celebration-meta-item {
             display: flex;
             align-items: center;
             gap: 6px;
         }
 
-        .celebration-meta-item svg {
-            width: 16px;
-            height: 16px;
-            fill: var(--success);
+        .progress-stat-label {
+            color: var(--text-muted);
         }
 
-        .celebration-actions {
+        .progress-actions {
+            margin-top: 12px;
             display: flex;
-            gap: 12px;
-            justify-content: center;
+            gap: 8px;
         }
 
-        .celebration-actions .btn {
-            min-width: 140px;
-        }
-
-        /* Floating particles background */
-        .particles-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            pointer-events: none;
-        }
-
-        .particle {
-            position: absolute;
-            border-radius: 50%;
-            animation: float-particle 3s ease-in-out infinite;
-        }
-
-        @keyframes float-particle {
-            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.6; }
-            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
-        }
-
-        /* Sparkle effect */
-        .sparkle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: white;
-            border-radius: 50%;
-            animation: sparkle 1.5s ease-in-out infinite;
-        }
-
-        @keyframes sparkle {
-            0%, 100% { transform: scale(0); opacity: 0; }
-            50% { transform: scale(1); opacity: 1; }
-        }
-
-        /* Burst animation for success */
-        .burst-ring {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 100px;
-            height: 100px;
-            margin: -50px 0 0 -50px;
-            border: 3px solid var(--success);
-            border-radius: 50%;
-            opacity: 0;
-            animation: burst-ring 1s ease-out;
-        }
-
-        @keyframes burst-ring {
-            0% { transform: scale(0.5); opacity: 1; }
-            100% { transform: scale(3); opacity: 0; }
-        }
-
-        /* Emoji rain */
-        .emoji-particle {
-            position: absolute;
-            font-size: 24px;
-            animation: emoji-fall 2.5s ease-out forwards;
-        }
-
-        @keyframes emoji-fall {
-            0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
-        }
-
-        /* Premium Alert Messages */
+        /* Alert */
         .alert {
-            padding: 16px 20px;
-            border-radius: 14px;
-            margin-bottom: 24px;
-            font-size: 14px;
-            font-weight: 500;
             display: none;
-            backdrop-filter: blur(10px);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .alert::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 4px;
+            padding: 12px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            align-items: center;
+            gap: 10px;
         }
 
         .alert.visible {
             display: flex;
-            align-items: center;
-            gap: 14px;
-            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .alert svg {
-            width: 22px;
-            height: 22px;
+            width: 18px;
+            height: 18px;
             fill: currentColor;
             flex-shrink: 0;
         }
 
         .alert-error {
-            background: rgba(255, 71, 87, 0.12);
-            border: 1px solid rgba(255, 71, 87, 0.25);
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
             color: var(--error);
         }
 
-        .alert-error::before {
-            background: var(--error);
-        }
-
         .alert-success {
-            background: rgba(0, 217, 126, 0.12);
-            border: 1px solid rgba(0, 217, 126, 0.25);
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
             color: var(--success);
         }
 
-        .alert-success::before {
-            background: var(--success);
-        }
-
         .alert-warning {
-            background: rgba(255, 184, 0, 0.12);
-            border: 1px solid rgba(255, 184, 0, 0.25);
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
             color: var(--warning);
         }
 
-        .alert-warning::before {
-            background: var(--warning);
-        }
-
         .alert-info {
-            background: rgba(0, 180, 255, 0.12);
-            border: 1px solid rgba(0, 180, 255, 0.25);
-            color: var(--info);
-        }
-
-        .alert-info::before {
-            background: var(--info);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 80px 24px;
+            background: rgba(136, 136, 136, 0.1);
+            border: 1px solid rgba(136, 136, 136, 0.2);
             color: var(--text-secondary);
         }
 
-        .empty-state svg {
-            width: 72px;
-            height: 72px;
-            fill: var(--text-muted);
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
-
-        .empty-state h3 {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--text-primary);
-        }
-
-        .empty-state p {
-            font-size: 14px;
-            color: var(--text-muted);
-        }
-
-        /* Playlist Preview */
+        /* Playlist */
         .playlist-preview {
             display: none;
         }
@@ -2016,59 +508,287 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .playlist-info {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
-        .playlist-count {
-            background: var(--primary);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 13px;
+        .playlist-title {
+            font-size: 14px;
             font-weight: 500;
         }
 
+        .playlist-count {
+            background: var(--bg-tertiary);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
         .playlist-videos {
-            max-height: 300px;
+            max-height: 200px;
             overflow-y: auto;
         }
 
-        .playlist-video-item {
+        .playlist-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px;
-            border-radius: 8px;
-            transition: background 0.2s;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
         }
 
-        .playlist-video-item:hover {
-            background: var(--bg-input);
+        .playlist-item:last-child {
+            border-bottom: none;
         }
 
-        .playlist-video-number {
+        .playlist-number {
             width: 24px;
-            text-align: center;
+            font-size: 12px;
             color: var(--text-muted);
-            font-size: 13px;
+            text-align: center;
         }
 
-        .playlist-video-title {
+        .playlist-item-title {
             flex: 1;
-            font-size: 14px;
+            font-size: 13px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
+        /* Batch Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+            margin: 20px;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            padding: 4px;
+            cursor: pointer;
+            color: var(--text-muted);
+            display: flex;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-close svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .batch-textarea {
+            width: 100%;
+            height: 180px;
+            padding: 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            resize: vertical;
+        }
+
+        .batch-textarea:focus {
+            outline: none;
+            border-color: var(--text-muted);
+        }
+
+        .batch-count {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Success Modal */
+        .success-modal {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .success-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(34, 197, 94, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .success-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--success);
+        }
+
+        .success-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .success-filename {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            word-break: break-all;
+            padding: 10px;
+            background: var(--bg-input);
+            border-radius: 4px;
+        }
+
+        .success-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .success-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        /* Drop Zone */
+        .drop-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 10, 10, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .drop-overlay.active {
+            display: flex;
+        }
+
+        .drop-content {
+            text-align: center;
+        }
+
+        .drop-box {
+            width: 300px;
+            height: 200px;
+            border: 2px dashed var(--border-hover);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .drop-box svg {
+            width: 48px;
+            height: 48px;
+            fill: var(--text-muted);
+        }
+
+        .drop-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border-hover);
+        }
+
         /* Responsive */
-        @media (max-width: 640px) {
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px 16px;
+            }
+
             .video-card {
                 flex-direction: column;
             }
@@ -2079,1106 +799,343 @@
                 aspect-ratio: 16/9;
             }
 
-            .options-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .input-with-button {
+            .input-row {
                 flex-direction: column;
             }
 
-            .header-content {
+            .checkbox-row {
                 flex-direction: column;
                 gap: 12px;
             }
         }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--bg-dark);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--border-light);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--text-muted);
-        }
-
-        /* Premium Tooltip */
-        [data-tooltip] {
-            position: relative;
-        }
-
-        [data-tooltip]:hover::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 8px 14px;
-            background: var(--bg-card-solid);
-            color: var(--text-primary);
-            font-size: 12px;
-            font-weight: 500;
-            white-space: nowrap;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            z-index: 100;
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--border);
-        }
-
-        /* Premium Format Type Selector */
-        .format-type-selector {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
-            padding: 6px;
-            background: var(--bg-input);
-            border-radius: 14px;
-            border: 1px solid var(--border);
-        }
-
-        .format-type-btn {
-            flex: 1;
-            padding: 14px 20px;
-            background: transparent;
-            border: none;
-            border-radius: 10px;
-            color: var(--text-secondary);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .format-type-btn:hover {
-            color: var(--text-primary);
-            background: var(--bg-glass);
-        }
-
-        .format-type-btn.active {
-            background: var(--gradient-primary);
-            color: white;
-            box-shadow: 0 4px 15px var(--primary-glow);
-        }
-
-        .format-type-btn svg {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
-        }
-
-        /* Premium Footer */
-        footer {
-            background: var(--bg-card);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid var(--border);
-            padding: 20px 24px;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 13px;
-            position: relative;
-        }
-
-        footer::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255, 0, 51, 0.3), transparent);
-        }
-
-        footer a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        footer a:hover {
-            color: var(--primary-light);
-        }
     </style>
 </head>
 <body>
-    <!-- Drag & Drop Overlay -->
-    <div class="drop-zone-overlay" id="dropZoneOverlay">
-        <div class="drop-zone-content">
-            <div class="drop-zone-box">
-                <div class="drop-zone-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-                    </svg>
-                </div>
-                <div class="drop-zone-text">
-                    <h2>Drop YouTube Video Here</h2>
-                    <p>Release to start analyzing the video</p>
-                </div>
-            </div>
-            <div class="drop-zone-hint">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
-                </svg>
-                <span>Drag a YouTube link from your browser or copy-paste a URL</span>
+    <!-- Drop Overlay -->
+    <div class="drop-overlay" id="dropOverlay">
+        <div class="drop-content">
+            <div class="drop-box">
+                <svg viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                <div class="drop-text">Drop YouTube URL here</div>
             </div>
         </div>
     </div>
 
-    <!-- Celebration Modal -->
-    <div class="celebration-modal" id="celebrationModal">
-        <div class="particles-bg" id="particlesBg"></div>
-        <div class="confetti-container" id="confettiContainer"></div>
-        <div class="celebration-content">
-            <div class="celebration-icon" id="celebrationIconContainer">
-                <svg viewBox="0 0 24 24">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                </svg>
+    <!-- Batch Modal -->
+    <div class="modal-overlay" id="batchModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">Batch URLs</span>
+                <button class="modal-close" onclick="closeBatchModal()">
+                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
             </div>
-            <h2 class="celebration-title">Download Complete!</h2>
-            <div class="celebration-filename" id="celebrationFilename"></div>
-            <div class="celebration-meta">
-                <div class="celebration-meta-item">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                    </svg>
-                    <span id="celebrationFilesize">--</span>
-                </div>
-                <div class="celebration-meta-item">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                    </svg>
-                    <span>Saved Successfully</span>
+            <div class="modal-body">
+                <textarea class="batch-textarea" id="batchTextarea" placeholder="Paste multiple YouTube URLs (one per line)"></textarea>
+                <div class="batch-count">
+                    <span>Valid URLs detected</span>
+                    <span id="batchUrlCount">0</span>
                 </div>
             </div>
-            <div class="celebration-actions">
-                <button class="btn btn-secondary" onclick="closeCelebration()">
-                    Close
-                </button>
-                <button class="btn btn-primary" onclick="openDownloadFolder()">
-                    <svg viewBox="0 0 24 24" width="18" height="18" style="fill: currentColor; margin-right: 6px;">
-                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                    </svg>
-                    Download Again
-                </button>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeBatchModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="processBatchUrls()" id="batchProcessBtn" disabled>Start Queue</button>
             </div>
         </div>
     </div>
 
-    <!-- Batch URL Modal -->
-    <div class="batch-modal-overlay" id="batchModalOverlay">
-        <div class="batch-modal">
-            <div class="batch-modal-header">
-                <div class="batch-modal-title">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/>
-                    </svg>
-                    Batch URL Paste
+    <!-- Success Modal -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="success-modal">
+                <div class="success-icon">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                 </div>
-                <button class="batch-modal-close" onclick="closeBatchModal()">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="batch-modal-body">
-                <textarea class="batch-textarea" id="batchTextarea" placeholder="Paste multiple YouTube URLs here (one per line)
-
-Example:
-https://www.youtube.com/watch?v=xxxxx
-https://youtu.be/yyyyy
-https://www.youtube.com/watch?v=zzzzz"></textarea>
-                <div class="batch-url-count">
-                    <div class="batch-url-count-label">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
-                        </svg>
-                        Valid YouTube URLs detected
-                    </div>
-                    <div class="batch-url-count-value" id="batchUrlCount">0</div>
+                <div class="success-title">Download Complete</div>
+                <div class="success-filename" id="successFilename"></div>
+                <div class="success-meta" id="successMeta"></div>
+                <div class="success-actions">
+                    <button class="btn" onclick="closeSuccessModal()">Close</button>
+                    <button class="btn btn-primary" onclick="openDownloadFolder()">Open Folder</button>
                 </div>
-            </div>
-            <div class="batch-modal-footer">
-                <button class="btn btn-secondary" onclick="closeBatchModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="processBatchUrls()" id="batchProcessBtn" disabled>
-                    <svg viewBox="0 0 24 24" width="18" height="18" style="fill: currentColor; margin-right: 6px;">
-                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                    </svg>
-                    Start Queue
-                </button>
             </div>
         </div>
     </div>
 
-    <div class="app-container">
+    <div class="container">
         <header>
-            <div class="header-wrapper">
-                <!-- Floating orbs -->
-                <div class="header-orb header-orb-1"></div>
-                <div class="header-orb header-orb-2"></div>
-                <div class="header-orb header-orb-3"></div>
-                
-                <div class="header-content">
-                    <!-- Logo Section -->
-                    <div class="logo">
-                        <div class="logo-container">
-                            <div class="logo-ring"></div>
-                            <div class="logo-ring-2"></div>
-                            <div class="logo-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="brand">
-                            <div class="brand-name">
-                                <h1>YT Downloader</h1>
-                                <span class="brand-badge">PRO</span>
-                            </div>
-                            <div class="brand-tagline">
-                                <span class="status-dot"></span>
-                                Fast & Secure Downloads
-                            </div>
-                        </div>
-                    </div>
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
                 </div>
+                <h1>YT Downloader</h1>
             </div>
         </header>
 
-        <main class="main-content">
-            <!-- Alert Messages -->
+        <main>
+            <!-- Alert -->
             <div id="alert" class="alert">
-                <svg id="alert-icon" viewBox="0 0 24 24"></svg>
-                <span id="alert-message"></span>
+                <svg id="alertIcon" viewBox="0 0 24 24"></svg>
+                <span id="alertMessage"></span>
             </div>
 
-            <!-- Download Tab -->
-            <div id="tab-download" class="tab-content active">
-                <!-- URL Input Card -->
-                <div class="card" id="urlCard">
-                    <div class="form-group">
-                        <label for="url">YouTube Video or Playlist URL</label>
-                        <div class="url-input-wrapper" id="urlInputWrapper">
-                            <div class="input-with-button">
-                                <input type="text" id="url" placeholder="https://www.youtube.com/watch?v=... or drag & drop a video here" autocomplete="off">
-                                <button type="button" class="batch-btn" onclick="openBatchModal()" data-tooltip="Paste multiple URLs">
-                                    <svg viewBox="0 0 24 24">
-                                        <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/>
-                                    </svg>
-                                </button>
-                                <button type="button" class="btn btn-primary" id="fetchBtn" onclick="fetchInfo()">
-                                    <svg viewBox="0 0 24 24">
-                                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                                    </svg>
-                                    Analyze
-                                </button>
-                            </div>
-                        </div>
+            <!-- URL Input -->
+            <div class="card">
+                <div class="form-group">
+                    <label>YouTube URL</label>
+                    <div class="input-row">
+                        <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=...">
+                        <button class="btn btn-sm" onclick="openBatchModal()" title="Batch URLs">
+                            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+                        </button>
+                        <button class="btn btn-primary" id="fetchBtn" onclick="fetchInfo()">Analyze</button>
                     </div>
                 </div>
+            </div>
 
-                <!-- Video Preview -->
-                <div class="video-preview" id="videoPreview">
-                    <div class="card">
-                        <div class="video-card">
-                            <div class="video-thumbnail-container">
-                                <img class="video-thumbnail" id="thumbnail" src="" alt="Video thumbnail">
-                                <span class="video-duration-badge" id="durationBadge"></span>
-                            </div>
-                            <div class="video-details">
-                                <div class="video-title" id="videoTitle"></div>
-                                <div class="video-meta">
-                                    <div class="video-meta-item" id="channelInfo">
-                                        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                                        <span id="channelName"></span>
-                                    </div>
-                                    <div class="video-meta-item" id="viewsInfo">
-                                        <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-                                        <span id="viewCount"></span>
-                                    </div>
-                                    <div class="video-meta-item" id="dateInfo">
-                                        <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>
-                                        <span id="uploadDate"></span>
-                                    </div>
+            <!-- Video Preview -->
+            <div class="video-preview" id="videoPreview">
+                <div class="card">
+                    <div class="video-card">
+                        <img class="video-thumbnail" id="thumbnail" src="" alt="">
+                        <div class="video-info">
+                            <div class="video-title" id="videoTitle"></div>
+                            <div class="video-meta">
+                                <div class="video-meta-item">
+                                    <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                                    <span id="channelName"></span>
                                 </div>
+                                <div class="video-meta-item">
+                                    <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                                    <span id="viewCount"></span>
+                                </div>
+                                <span class="duration-badge" id="durationBadge"></span>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Playlist Preview -->
-                <div class="playlist-preview" id="playlistPreview">
-                    <div class="card">
-                        <div class="playlist-header">
-                            <div class="playlist-info">
-                                <h3 id="playlistTitle">Playlist</h3>
-                                <span class="playlist-count" id="playlistCount">0 videos</span>
-                            </div>
+            <!-- Playlist Preview -->
+            <div class="playlist-preview" id="playlistPreview">
+                <div class="card">
+                    <div class="playlist-header">
+                        <div class="playlist-info">
+                            <span class="playlist-title" id="playlistTitle">Playlist</span>
+                            <span class="playlist-count" id="playlistCount">0 videos</span>
                         </div>
-                        <div class="playlist-videos" id="playlistVideos"></div>
                     </div>
+                    <div class="playlist-videos" id="playlistVideos"></div>
+                </div>
+            </div>
+
+            <!-- Options -->
+            <div class="card" id="optionsCard">
+                <div class="card-header">
+                    <span class="card-title">Download Options</span>
                 </div>
 
-                <!-- Download Options -->
-                <div class="card" id="optionsCard" style="display: none;">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <svg viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>
-                            Download Options
-                        </div>
-                    </div>
-
-                    <!-- Format Type Selector -->
-                    <div class="format-type-selector">
-                        <button class="format-type-btn active" id="videoFormatBtn" onclick="selectFormatType('video')">
-                            <svg viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
-                            Video
-                        </button>
-                        <button class="format-type-btn" id="audioFormatBtn" onclick="selectFormatType('audio')">
-                            <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-                            Audio Only
-                        </button>
-                    </div>
-
-                    <!-- Video Options -->
-                    <div id="videoOptions">
-                        <div class="form-group">
-                            <label for="resolution">Video Quality</label>
-                            <select id="resolution">
-                                <option value="">Select quality...</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Audio Options -->
-                    <div id="audioOptions" style="display: none;">
-                        <div class="form-group">
-                            <label for="audioFormat">Audio Format</label>
-                            <select id="audioFormat">
-                                <option value="">Select format...</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Additional Options -->
-                    <div class="form-group">
-                        <label>Additional Options</label>
-                        <div class="checkbox-group">
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="downloadSubtitles">
-                                <label for="downloadSubtitles">Download Subtitles</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="downloadThumbnail">
-                                <label for="downloadThumbnail">Save Thumbnail</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Subtitle Language (shown when subtitles checked) -->
-                    <div class="form-group" id="subtitleLangGroup" style="display: none;">
-                        <label for="subtitleLang">Subtitle Language</label>
-                        <select id="subtitleLang">
-                            <option value="">Select language...</option>
-                        </select>
-                    </div>
-
-                    <!-- Cookie Input (The "Skeleton Key") -->
-                    <div class="form-group">
-                        <details>
-                            <summary style="cursor: pointer; color: var(--primary); font-size: 13px; font-weight: 600;">
-                                <svg viewBox="0 0 24 24" width="14" height="14" style="fill: currentColor; vertical-align: middle; margin-right: 4px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                                Have "Sign in" errors? Paste Cookies Here
-                            </summary>
-                            <div style="margin-top: 12px;">
-                                <label for="userCookies" style="display: flex; justify-content: space-between;">
-                                    Netscape Cookies Content
-                                    <a href="https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp" target="_blank" style="color: var(--info); font-size: 11px;">How to get?</a>
-                                </label>
-                                <textarea id="userCookies" placeholder="# Netscape HTTP Cookie File
-.youtube.com    TRUE    /    FALSE    1700000000    VISITOR_INFO1_LIVE    ..." style="width: 100%; height: 100px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-primary); border-radius: 12px; padding: 12px; font-family: monospace; font-size: 11px; resize: vertical;"></textarea>
-                            </div>
-                        </details>
-                    </div>
-
-                    <!-- Download Button -->
-                    <button type="button" class="btn btn-primary btn-lg btn-block" id="downloadBtn" onclick="startDownload()" disabled>
-                        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                        Download
+                <div class="format-tabs">
+                    <button class="format-tab active" id="videoTab" onclick="selectFormat('video')">
+                        <svg viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                        Video
+                    </button>
+                    <button class="format-tab" id="audioTab" onclick="selectFormat('audio')">
+                        <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                        Audio
                     </button>
                 </div>
 
-                <!-- Progress Section -->
-                <div class="progress-section" id="progressSection">
-                    <div class="card">
-                        <!-- Batch Queue Indicator -->
-                        <div class="batch-queue-indicator" id="batchQueueIndicator">
-                            <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
-                            <span id="batchQueueText">Downloading 1 of 3</span>
+                <div id="videoOptions">
+                    <div class="form-group">
+                        <label>Quality</label>
+                        <select id="resolution">
+                            <option value="">Select quality...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="audioOptions" style="display: none;">
+                    <div class="form-group">
+                        <label>Format</label>
+                        <select id="audioFormat">
+                            <option value="">Select format...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Options</label>
+                    <div class="checkbox-row">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="downloadSubtitles">
+                            <span>Subtitles</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="downloadThumbnail">
+                            <span>Thumbnail</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="subtitleGroup" style="display: none;">
+                    <label>Subtitle Language</label>
+                    <select id="subtitleLang">
+                        <option value="">Select language...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Save Location</label>
+                    <div class="input-row">
+                        <input type="text" id="savePath" placeholder="Select folder...">
+                        <button class="btn" onclick="selectFolder()">Browse</button>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-block" id="downloadBtn" onclick="startDownload()" disabled>
+                    <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                    Download
+                </button>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress-section" id="progressSection">
+                <div class="card">
+                    <div class="progress-header">
+                        <span class="progress-title" id="progressTitle">Downloading...</span>
+                        <span class="progress-percentage" id="progressPercent">0%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                    <div class="progress-stats">
+                        <div class="progress-stat">
+                            <span class="progress-stat-label">Speed:</span>
+                            <span id="progressSpeed">--</span>
                         </div>
-                        
-                        <div class="progress-card-enhanced">
-                            <!-- SVG Gradient Definition -->
-                            <svg width="0" height="0" style="position: absolute;">
-                                <defs>
-                                    <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" style="stop-color:#ff0033"/>
-                                        <stop offset="100%" style="stop-color:#ff6b00"/>
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-                            
-                            <!-- Progress Ring -->
-                            <div class="progress-ring-container">
-                                <svg class="progress-ring active" width="120" height="120" viewBox="0 0 120 120" id="progressRing">
-                                    <circle class="progress-ring-bg" cx="60" cy="60" r="50"/>
-                                    <circle class="progress-ring-fill" cx="60" cy="60" r="50" id="progressRingFill"/>
-                                </svg>
-                                <div class="progress-ring-center">
-                                    <div class="progress-ring-percent" id="progressRingPercent">0%</div>
-                                    <div class="progress-ring-label">Complete</div>
-                                </div>
-                            </div>
-                            
-                            <!-- Progress Details -->
-                            <div class="progress-details">
-                                <div class="progress-details-header">
-                                    <div class="progress-details-title" id="progressTitle">Starting download...</div>
-                                    <button class="btn btn-ghost btn-sm" onclick="cancelDownload()" id="cancelBtn">
-                                        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                                        Cancel
-                                    </button>
-                                </div>
-                                
-                                <!-- Stats Grid -->
-                                <div class="progress-details-stats">
-                                    <div class="progress-stat speed">
-                                        <div class="progress-stat-value" id="progressSpeed">--</div>
-                                        <div class="progress-stat-label">Speed</div>
-                                    </div>
-                                    <div class="progress-stat size">
-                                        <div class="progress-stat-value" id="progressDownloaded">--</div>
-                                        <div class="progress-stat-label">Downloaded</div>
-                                    </div>
-                                    <div class="progress-stat eta">
-                                        <div class="progress-stat-value" id="progressETA">--</div>
-                                        <div class="progress-stat-label">Remaining</div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Linear bar for secondary indicator -->
-                                <div class="progress-bar-container" style="margin-top: 16px; margin-bottom: 0;">
-                                    <div class="progress-bar" id="progressBar"></div>
-                                </div>
-                            </div>
+                        <div class="progress-stat">
+                            <span class="progress-stat-label">ETA:</span>
+                            <span id="progressETA">--</span>
                         </div>
+                        <div class="progress-stat">
+                            <span class="progress-stat-label">Downloaded:</span>
+                            <span id="progressDownloaded">--</span>
+                        </div>
+                    </div>
+                    <div class="progress-actions">
+                        <button class="btn btn-danger btn-sm" id="cancelBtn" onclick="cancelDownload()">Cancel</button>
                     </div>
                 </div>
             </div>
         </main>
-
-        <footer>
-            <p>Powered by <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener">yt-dlp</a> &bull; Built with <a href="https://ffmpeg.org" target="_blank" rel="noopener">ffmpeg</a> &bull; Made with ♥</p>
-        </footer>
     </div>
 
     <script>
         // State
         let videoInfo = null;
+        let formatType = 'video';
         let eventSource = null;
         let currentSessionId = null;
-        let formatType = 'video';
-        let lastDownloadInfo = {};
-        
-        // Batch Queue State
         let batchQueue = [];
         let currentBatchIndex = 0;
         let isBatchDownloading = false;
 
-        // ========== BATCH URL FUNCTIONS ==========
-        
-        function openBatchModal() {
-            const overlay = document.getElementById('batchModalOverlay');
-            overlay.classList.add('active');
-            document.getElementById('batchTextarea').value = '';
-            document.getElementById('batchUrlCount').textContent = '0';
-            document.getElementById('batchProcessBtn').disabled = true;
-            document.getElementById('batchTextarea').focus();
-        }
-        
-        function closeBatchModal() {
-            const overlay = document.getElementById('batchModalOverlay');
-            overlay.classList.remove('active');
-        }
-        
-        // Listen for textarea input to count URLs
-        document.addEventListener('DOMContentLoaded', function() {
-            const batchTextarea = document.getElementById('batchTextarea');
-            if (batchTextarea) {
-                batchTextarea.addEventListener('input', updateBatchUrlCount);
-            }
-        });
-        
-        function updateBatchUrlCount() {
-            const textarea = document.getElementById('batchTextarea');
-            const text = textarea.value;
-            const urls = extractAllYouTubeUrls(text);
-            const count = urls.length;
-            
-            document.getElementById('batchUrlCount').textContent = count;
-            document.getElementById('batchProcessBtn').disabled = count === 0;
-        }
-        
-        function extractAllYouTubeUrls(text) {
-            const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/g;
-            const urls = [];
-            const seen = new Set();
-            let match;
-            
-            while ((match = regex.exec(text)) !== null) {
-                const videoId = match[1];
-                if (!seen.has(videoId)) {
-                    seen.add(videoId);
-                    urls.push(`https://www.youtube.com/watch?v=${videoId}`);
-                }
-            }
-            
-            return urls;
-        }
-        
-        function processBatchUrls() {
-            const textarea = document.getElementById('batchTextarea');
-            const urls = extractAllYouTubeUrls(textarea.value);
-            
-            if (urls.length === 0) {
-                showAlert('error', 'No valid YouTube URLs found');
-                return;
-            }
-            
-            // Set up the queue
-            batchQueue = urls;
-            currentBatchIndex = 0;
-            isBatchDownloading = true;
-            
-            closeBatchModal();
-            
-            // Show batch indicator
-            updateBatchIndicator();
-            
-            // Start with the first URL
-            document.getElementById('url').value = batchQueue[0];
-            fetchInfo();
-            
-            showAlert('success', `Added ${urls.length} video${urls.length > 1 ? 's' : ''} to queue`);
-        }
-        
-        function updateBatchIndicator() {
-            const indicator = document.getElementById('batchQueueIndicator');
-            const text = document.getElementById('batchQueueText');
-            
-            if (isBatchDownloading && batchQueue.length > 1) {
-                indicator.classList.add('visible');
-                text.textContent = `Downloading ${currentBatchIndex + 1} of ${batchQueue.length}`;
-            } else {
-                indicator.classList.remove('visible');
-            }
-        }
-        
-        function processNextInQueue() {
-            currentBatchIndex++;
-            
-            if (currentBatchIndex < batchQueue.length) {
-                updateBatchIndicator();
-                document.getElementById('url').value = batchQueue[currentBatchIndex];
-                
-                // Small delay before fetching next
-                setTimeout(() => {
-                    fetchInfo();
-                    // Auto-start download after info is fetched
-                    setTimeout(() => {
-                        if (videoInfo) {
-                            startDownload();
-                        }
-                    }, 1500);
-                }, 500);
-            } else {
-                // Queue complete
-                isBatchDownloading = false;
-                batchQueue = [];
-                currentBatchIndex = 0;
-                updateBatchIndicator();
-                
-                if (batchQueue.length > 1) {
-                    showAlert('success', 'All downloads complete! 🎉');
-                }
-            }
-        }
-
-        // ========== PROGRESS RING FUNCTIONS ==========
-        
-        function updateProgressRing(percent) {
-            const ring = document.getElementById('progressRingFill');
-            const percentText = document.getElementById('progressRingPercent');
-            
-            if (ring && percentText) {
-                // Calculate stroke-dashoffset (314 is the circumference for r=50)
-                const circumference = 314;
-                const offset = circumference - (percent / 100) * circumference;
-                ring.style.strokeDashoffset = offset;
-                
-                percentText.textContent = `${Math.round(percent)}%`;
-                
-                // Update ring animation state
-                const progressRing = document.getElementById('progressRing');
-                if (percent >= 100) {
-                    progressRing.classList.remove('active');
-                    ring.classList.add('complete');
-                    percentText.classList.add('complete');
-                } else {
-                    progressRing.classList.add('active');
-                    ring.classList.remove('complete');
-                    percentText.classList.remove('complete');
-                }
-            }
-        }
-        
-        function resetProgressRing() {
-            const ring = document.getElementById('progressRingFill');
-            const percentText = document.getElementById('progressRingPercent');
-            const progressRing = document.getElementById('progressRing');
-            
-            if (ring) {
-                ring.style.strokeDashoffset = 314;
-                ring.classList.remove('complete', 'error');
-            }
-            if (percentText) {
-                percentText.textContent = '0%';
-                percentText.classList.remove('complete');
-            }
-            if (progressRing) {
-                progressRing.classList.add('active');
-            }
-        }
-
-        // ========== CELEBRATION FUNCTIONS ==========
-        
-        function triggerCelebration(filename, filesize, sessionId) {
-            lastDownloadInfo = { filename, filesize, sessionId };
-            
-            // Update modal content
-            document.getElementById('celebrationFilename').textContent = filename;
-            document.getElementById('celebrationFilesize').textContent = filesize || 'Unknown';
-            
-            // Show modal
-            const modal = document.getElementById('celebrationModal');
-            modal.classList.add('active');
-            
-            // Create confetti
-            createConfetti();
-            createParticles();
-            createEmojiRain();
-            createBurstRings();
-            playSuccessSound();
-            
-            // Auto trigger browser download
-            window.location.href = `/serve/${sessionId}`;
-        }
-        
-        function closeCelebration() {
-            const modal = document.getElementById('celebrationModal');
-            modal.classList.remove('active');
-            
-            // Clean up particles
-            document.getElementById('confettiContainer').innerHTML = '';
-            document.getElementById('particlesBg').innerHTML = '';
-        }
-        
-        function createConfetti() {
-            const container = document.getElementById('confettiContainer');
-            container.innerHTML = '';
-            
-            const colors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#a855f7', '#00c853', '#2196f3', '#ff9800', '#e91e63'];
-            const shapes = ['square', 'circle', 'triangle'];
-            
-            for (let i = 0; i < 100; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                
-                const color = colors[Math.floor(Math.random() * colors.length)];
-                const shape = shapes[Math.floor(Math.random() * shapes.length)];
-                const left = Math.random() * 100;
-                const delay = Math.random() * 0.5;
-                const size = 5 + Math.random() * 10;
-                const rotation = Math.random() * 360;
-                
-                confetti.style.left = `${left}%`;
-                confetti.style.top = '-20px';
-                confetti.style.width = `${size}px`;
-                confetti.style.height = `${size}px`;
-                confetti.style.background = color;
-                confetti.style.animationDelay = `${delay}s`;
-                confetti.style.animationDuration = `${2 + Math.random() * 2}s`;
-                confetti.style.transform = `rotate(${rotation}deg)`;
-                
-                if (shape === 'circle') {
-                    confetti.style.borderRadius = '50%';
-                } else if (shape === 'triangle') {
-                    confetti.style.width = '0';
-                    confetti.style.height = '0';
-                    confetti.style.background = 'transparent';
-                    confetti.style.borderLeft = `${size/2}px solid transparent`;
-                    confetti.style.borderRight = `${size/2}px solid transparent`;
-                    confetti.style.borderBottom = `${size}px solid ${color}`;
-                }
-                
-                container.appendChild(confetti);
-                
-                setTimeout(() => {
-                    confetti.classList.add('active');
-                }, 10);
-            }
-        }
-        
-        function createParticles() {
-            const container = document.getElementById('particlesBg');
-            container.innerHTML = '';
-            
-            const colors = ['rgba(0, 200, 83, 0.6)', 'rgba(76, 175, 80, 0.6)', 'rgba(139, 195, 74, 0.6)'];
-            
-            for (let i = 0; i < 30; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                
-                const size = 3 + Math.random() * 8;
-                const x = Math.random() * 100;
-                const y = Math.random() * 100;
-                const color = colors[Math.floor(Math.random() * colors.length)];
-                const delay = Math.random() * 2;
-                const duration = 2 + Math.random() * 2;
-                
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
-                particle.style.left = `${x}%`;
-                particle.style.top = `${y}%`;
-                particle.style.background = color;
-                particle.style.animationDelay = `${delay}s`;
-                particle.style.animationDuration = `${duration}s`;
-                particle.style.boxShadow = `0 0 ${size * 2}px ${color}`;
-                
-                container.appendChild(particle);
-            }
-            
-            // Add sparkles
-            for (let i = 0; i < 20; i++) {
-                const sparkle = document.createElement('div');
-                sparkle.className = 'sparkle';
-                
-                sparkle.style.left = `${Math.random() * 100}%`;
-                sparkle.style.top = `${Math.random() * 100}%`;
-                sparkle.style.animationDelay = `${Math.random() * 2}s`;
-                
-                container.appendChild(sparkle);
-            }
-        }
-        
-        function createEmojiRain() {
-            const container = document.getElementById('confettiContainer');
-            const emojis = ['🎉', '🎊', '✨', '🌟', '⭐', '🏆', '👏', '💫', '🔥', '💯'];
-            
-            for (let i = 0; i < 20; i++) {
-                setTimeout(() => {
-                    const emoji = document.createElement('div');
-                    emoji.className = 'emoji-particle';
-                    emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-                    emoji.style.left = `${Math.random() * 100}%`;
-                    emoji.style.top = '-50px';
-                    emoji.style.animationDuration = `${2 + Math.random() * 1.5}s`;
-                    
-                    container.appendChild(emoji);
-                    
-                    // Remove after animation
-                    setTimeout(() => emoji.remove(), 3000);
-                }, i * 100);
-            }
-        }
-        
-        function createBurstRings() {
-            const iconContainer = document.getElementById('celebrationIconContainer');
-            
-            for (let i = 0; i < 3; i++) {
-                setTimeout(() => {
-                    const ring = document.createElement('div');
-                    ring.className = 'burst-ring';
-                    iconContainer.appendChild(ring);
-                    
-                    setTimeout(() => ring.remove(), 1000);
-                }, i * 200);
-            }
-        }
-        
-        function playSuccessSound() {
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                
-                // Success chord (C major arpeggio)
-                const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
-                
-                notes.forEach((freq, i) => {
-                    setTimeout(() => {
-                        const oscillator = audioContext.createOscillator();
-                        const gainNode = audioContext.createGain();
-                        
-                        oscillator.connect(gainNode);
-                        gainNode.connect(audioContext.destination);
-                        
-                        oscillator.type = 'sine';
-                        oscillator.frequency.value = freq;
-                        
-                        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-                        
-                        oscillator.start(audioContext.currentTime);
-                        oscillator.stop(audioContext.currentTime + 0.5);
-                    }, i * 100);
-                });
-            } catch (e) {
-                // Audio not supported or blocked
-            }
-        }
-        
-        function openDownloadFolder() {
-            // Re-purposed as 'Download Again'
-            if (lastDownloadInfo.sessionId) {
-                window.location.href = `/serve/${lastDownloadInfo.sessionId}`;
-            }
-        }
-
-        // ========== END CELEBRATION FUNCTIONS ==========
-
-        // DOM Elements
-        const urlInput = document.getElementById('url');
-        const resolutionSelect = document.getElementById('resolution');
-        const audioFormatSelect = document.getElementById('audioFormat');
-        const downloadBtn = document.getElementById('downloadBtn');
+        // Elements
+        const urlInput = document.getElementById('urlInput');
         const fetchBtn = document.getElementById('fetchBtn');
         const videoPreview = document.getElementById('videoPreview');
         const playlistPreview = document.getElementById('playlistPreview');
         const optionsCard = document.getElementById('optionsCard');
-        const progressSection = document.getElementById('progressSection');
+        const resolutionSelect = document.getElementById('resolution');
+        const audioFormatSelect = document.getElementById('audioFormat');
         const subtitleLangSelect = document.getElementById('subtitleLang');
-        const subtitleLangGroup = document.getElementById('subtitleLangGroup');
+        const savePathInput = document.getElementById('savePath');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const progressSection = document.getElementById('progressSection');
+        const subtitleGroup = document.getElementById('subtitleGroup');
 
-        // Initialize
-        window.addEventListener('load', () => {
-            // checkFfmpeg(); // Backend handles this now
-        });
-
-        // Event listeners
+        // Event Listeners
         urlInput.addEventListener('input', updateDownloadButton);
+        urlInput.addEventListener('paste', () => setTimeout(fetchInfo, 100));
+        urlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') fetchInfo(); });
         resolutionSelect.addEventListener('change', updateDownloadButton);
         audioFormatSelect.addEventListener('change', updateDownloadButton);
-
-        urlInput.addEventListener('paste', () => {
-            setTimeout(fetchInfo, 100);
-        });
-
-        urlInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') fetchInfo();
-        });
-
+        savePathInput.addEventListener('input', updateDownloadButton);
         document.getElementById('downloadSubtitles').addEventListener('change', (e) => {
-            subtitleLangGroup.style.display = e.target.checked ? 'block' : 'none';
+            subtitleGroup.style.display = e.target.checked ? 'block' : 'none';
         });
 
-        // ========== DRAG & DROP FUNCTIONALITY ==========
-        const dropZoneOverlay = document.getElementById('dropZoneOverlay');
-        const urlInputWrapper = document.getElementById('urlInputWrapper');
+        // Drag & Drop
         let dragCounter = 0;
+        const dropOverlay = document.getElementById('dropOverlay');
 
-        // Extract YouTube URL from dropped data
         function extractYouTubeUrl(text) {
-            // Match various YouTube URL formats
             const patterns = [
                 /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=[\w-]+/gi,
                 /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/[\w-]+/gi,
                 /(?:https?:\/\/)?youtu\.be\/[\w-]+/gi,
-                /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/[\w-]+/gi,
-                /(?:https?:\/\/)?(?:www\.)?youtube\.com\/v\/[\w-]+/gi,
-                /(?:https?:\/\/)?(?:www\.)?youtube\.com\/playlist\?list=[\w-]+/gi,
-                /(?:https?:\/\/)?(?:music\.)?youtube\.com\/watch\?v=[\w-]+/gi
+                /(?:https?:\/\/)?(?:www\.)?youtube\.com\/playlist\?list=[\w-]+/gi
             ];
-            
             for (const pattern of patterns) {
                 const match = text.match(pattern);
                 if (match) {
                     let url = match[0];
-                    // Ensure https prefix
-                    if (!url.startsWith('http')) {
-                        url = 'https://' + url;
-                    }
+                    if (!url.startsWith('http')) url = 'https://' + url;
                     return url;
                 }
             }
             return null;
         }
 
-        // Handle drop on page
-        function handleDrop(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            dragCounter = 0;
-            dropZoneOverlay.classList.remove('active');
-            urlInputWrapper.classList.remove('drag-hover');
-            
-            let url = null;
-            
-            // Check for URL in different data types
-            const types = e.dataTransfer.types;
-            
-            // Try text/uri-list first (dragging link from browser)
-            if (types.includes('text/uri-list')) {
-                const uriList = e.dataTransfer.getData('text/uri-list');
-                url = extractYouTubeUrl(uriList);
-            }
-            
-            // Try text/plain
-            if (!url && types.includes('text/plain')) {
-                const text = e.dataTransfer.getData('text/plain');
-                url = extractYouTubeUrl(text);
-            }
-            
-            // Try text/html (some browsers include this)
-            if (!url && types.includes('text/html')) {
-                const html = e.dataTransfer.getData('text/html');
-                url = extractYouTubeUrl(html);
-            }
-            
-            if (url) {
-                urlInput.value = url;
-                showDropSuccess();
-                setTimeout(() => {
-                    fetchInfo();
-                }, 300);
-            } else {
-                showAlert('error', 'No valid YouTube URL found. Please drop a YouTube video link.');
-            }
-        }
-
-        // Show success animation on drop
-        function showDropSuccess() {
-            urlInputWrapper.style.transition = 'transform 0.2s ease';
-            urlInputWrapper.style.transform = 'scale(1.02)';
-            urlInput.style.borderColor = 'var(--success)';
-            urlInput.style.boxShadow = '0 0 0 4px var(--success-glow), 0 0 20px var(--success-glow)';
-            
-            setTimeout(() => {
-                urlInputWrapper.style.transform = 'scale(1)';
-                urlInput.style.borderColor = '';
-                urlInput.style.boxShadow = '';
-            }, 500);
-        }
-
-        // Drag enter on document
         document.addEventListener('dragenter', (e) => {
             e.preventDefault();
             dragCounter++;
-            
-            // Check if dragging contains URL-like content
-            if (e.dataTransfer.types.includes('text/uri-list') || 
-                e.dataTransfer.types.includes('text/plain') ||
-                e.dataTransfer.types.includes('text/html')) {
-                dropZoneOverlay.classList.add('active');
+            if (e.dataTransfer.types.includes('text/uri-list') || e.dataTransfer.types.includes('text/plain')) {
+                dropOverlay.classList.add('active');
             }
         });
 
-        // Drag leave on document
         document.addEventListener('dragleave', (e) => {
             e.preventDefault();
             dragCounter--;
-            
             if (dragCounter <= 0) {
                 dragCounter = 0;
-                dropZoneOverlay.classList.remove('active');
-                urlInputWrapper.classList.remove('drag-hover');
+                dropOverlay.classList.remove('active');
             }
         });
 
-        // Drag over (required for drop to work)
         document.addEventListener('dragover', (e) => {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'copy';
         });
 
-        // Drop on document
-        document.addEventListener('drop', handleDrop);
-
-        // Drop zone overlay click to close
-        dropZoneOverlay.addEventListener('click', (e) => {
-            if (e.target === dropZoneOverlay) {
-                dropZoneOverlay.classList.remove('active');
-                dragCounter = 0;
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragCounter = 0;
+            dropOverlay.classList.remove('active');
+            
+            let url = null;
+            if (e.dataTransfer.types.includes('text/uri-list')) {
+                url = extractYouTubeUrl(e.dataTransfer.getData('text/uri-list'));
+            }
+            if (!url && e.dataTransfer.types.includes('text/plain')) {
+                url = extractYouTubeUrl(e.dataTransfer.getData('text/plain'));
+            }
+            
+            if (url) {
+                urlInput.value = url;
+                setTimeout(fetchInfo, 100);
+            } else {
+                showAlert('error', 'No valid YouTube URL found');
             }
         });
 
-        // Also handle drop directly on URL input
-        urlInputWrapper.addEventListener('dragenter', (e) => {
-            e.preventDefault();
-            urlInputWrapper.classList.add('drag-hover');
-        });
-
-        urlInputWrapper.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            urlInputWrapper.classList.remove('drag-hover');
-        });
-
-        urlInputWrapper.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'copy';
-        });
-
-        urlInputWrapper.addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            urlInputWrapper.classList.remove('drag-hover');
-            handleDrop(e);
-        });
-
-        // ========== END DRAG & DROP ==========
-
         // Functions
-        function selectFormatType(type) {
-            formatType = type;
-            document.getElementById('videoFormatBtn').classList.toggle('active', type === 'video');
-            document.getElementById('audioFormatBtn').classList.toggle('active', type === 'audio');
-            document.getElementById('videoOptions').style.display = type === 'video' ? 'block' : 'none';
-            document.getElementById('audioOptions').style.display = type === 'audio' ? 'block' : 'none';
-            updateDownloadButton();
-        }
-
-        async function checkFfmpeg() {
-            // Backend handles this
-        }
-
         function showAlert(type, message) {
             const alert = document.getElementById('alert');
-            const alertIcon = document.getElementById('alert-icon');
-            const alertMessage = document.getElementById('alert-message');
+            const alertIcon = document.getElementById('alertIcon');
+            const alertMessage = document.getElementById('alertMessage');
             
             alert.className = `alert alert-${type} visible`;
             alertMessage.textContent = message;
@@ -3200,10 +1157,24 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
             document.getElementById('alert').classList.remove('visible');
         }
 
+        function selectFormat(type) {
+            formatType = type;
+            document.getElementById('videoTab').classList.toggle('active', type === 'video');
+            document.getElementById('audioTab').classList.toggle('active', type === 'audio');
+            document.getElementById('videoOptions').style.display = type === 'video' ? 'block' : 'none';
+            document.getElementById('audioOptions').style.display = type === 'audio' ? 'block' : 'none';
+            updateDownloadButton();
+        }
+
+        function updateDownloadButton() {
+            const hasUrl = urlInput.value.trim() !== '';
+            const hasFormat = formatType === 'video' ? resolutionSelect.value !== '' : audioFormatSelect.value !== '';
+            const hasPath = savePathInput.value.trim() !== '';
+            downloadBtn.disabled = !(hasUrl && hasFormat && hasPath);
+        }
+
         async function fetchInfo() {
             const url = urlInput.value.trim();
-            const cookies = document.getElementById('userCookies').value;
-            
             if (!url) {
                 showAlert('error', 'Please enter a YouTube URL');
                 return;
@@ -3211,9 +1182,8 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
             
             hideAlert();
             fetchBtn.disabled = true;
-            fetchBtn.innerHTML = '<div class="spinner"></div> Analyzing...';
+            fetchBtn.innerHTML = '<div class="spinner"></div> Analyzing';
             
-            // Reset UI
             videoPreview.classList.remove('visible');
             playlistPreview.classList.remove('visible');
             optionsCard.style.display = 'none';
@@ -3222,7 +1192,7 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
                 const response = await fetch('/get_info', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url, cookies })
+                    body: JSON.stringify({ url })
                 });
                 
                 const data = await response.json();
@@ -3233,38 +1203,56 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
                 
                 videoInfo = data;
                 
-                // Handle single video
-                document.getElementById('thumbnail').src = data.thumbnail;
-                document.getElementById('videoTitle').textContent = data.title;
-                document.getElementById('durationBadge').textContent = data.duration_formatted;
-                document.getElementById('channelName').textContent = data.channel;
-                
-                // Clear old options
-                resolutionSelect.innerHTML = '<option value="">Select quality...</option>';
-                
-                // Populate resolution dropdown
-                if (data.resolutions && data.resolutions.length) {
+                if (data.is_playlist) {
+                    document.getElementById('playlistTitle').textContent = data.playlist_title;
+                    document.getElementById('playlistCount').textContent = `${data.playlist_count} videos`;
+                    
+                    const videosContainer = document.getElementById('playlistVideos');
+                    videosContainer.innerHTML = data.videos.map((v, i) => `
+                        <div class="playlist-item">
+                            <span class="playlist-number">${i + 1}</span>
+                            <span class="playlist-item-title">${v.title}</span>
+                        </div>
+                    `).join('');
+                    
+                    playlistPreview.classList.add('visible');
+                    showAlert('info', 'Playlist detected. Please use a direct video URL.');
+                } else {
+                    document.getElementById('thumbnail').src = data.thumbnail;
+                    document.getElementById('videoTitle').textContent = data.title;
+                    document.getElementById('durationBadge').textContent = data.duration_formatted;
+                    document.getElementById('channelName').textContent = data.channel;
+                    document.getElementById('viewCount').textContent = data.view_count_formatted + ' views';
+                    
+                    resolutionSelect.innerHTML = '<option value="">Select quality...</option>';
                     data.resolutions.forEach(res => {
                         const option = document.createElement('option');
                         option.value = res.value;
                         option.textContent = res.label;
                         resolutionSelect.appendChild(option);
                     });
-                }
-                
-                // Populate audio format dropdown
-                audioFormatSelect.innerHTML = '<option value="">Select format...</option>';
-                if (data.audio_formats) {
+                    
+                    audioFormatSelect.innerHTML = '<option value="">Select format...</option>';
                     data.audio_formats.forEach(fmt => {
                         const option = document.createElement('option');
                         option.value = fmt.value;
                         option.textContent = fmt.label;
                         audioFormatSelect.appendChild(option);
                     });
+                    
+                    subtitleLangSelect.innerHTML = '<option value="">Select language...</option>';
+                    if (data.subtitles && data.subtitles.length > 0) {
+                        data.subtitles.forEach(sub => {
+                            const option = document.createElement('option');
+                            option.value = sub.value;
+                            option.textContent = sub.label;
+                            subtitleLangSelect.appendChild(option);
+                        });
+                    }
+                    
+                    videoPreview.classList.add('visible');
+                    optionsCard.style.display = 'block';
                 }
-                
-                videoPreview.classList.add('visible');
-                optionsCard.style.display = 'block';
                 
                 updateDownloadButton();
                 
@@ -3272,31 +1260,36 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
                 showAlert('error', error.message);
             } finally {
                 fetchBtn.disabled = false;
-                fetchBtn.innerHTML = `
-                    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                    Analyze`;
+                fetchBtn.textContent = 'Analyze';
             }
         }
 
-        function updateDownloadButton() {
-            const hasUrl = urlInput.value.trim() !== '';
-            const hasFormat = formatType === 'video' 
-                ? resolutionSelect.value !== '' 
-                : audioFormatSelect.value !== '';
-            
-            downloadBtn.disabled = !(hasUrl && hasFormat);
+        async function selectFolder() {
+            try {
+                const response = await fetch('/select_folder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                if (data.success && data.path) {
+                    savePathInput.value = data.path;
+                    updateDownloadButton();
+                }
+            } catch (error) {
+                showAlert('error', 'Failed to open folder dialog');
+            }
         }
 
         async function startDownload() {
             const url = urlInput.value.trim();
             const resolution = formatType === 'video' ? resolutionSelect.value : audioFormatSelect.value;
+            const savePath = savePathInput.value.trim();
             const downloadSubtitles = document.getElementById('downloadSubtitles').checked;
             const subtitleLang = subtitleLangSelect.value;
             const downloadThumbnail = document.getElementById('downloadThumbnail').checked;
-            const cookies = document.getElementById('userCookies').value;
             
-            if (!url || !resolution) {
-                showAlert('error', 'Please select a format');
+            if (!url || !resolution || !savePath) {
+                showAlert('error', 'Please fill in all required fields');
                 return;
             }
             
@@ -3306,6 +1299,7 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
             
             const progressBar = document.getElementById('progressBar');
             const progressTitle = document.getElementById('progressTitle');
+            const progressPercent = document.getElementById('progressPercent');
             const progressSpeed = document.getElementById('progressSpeed');
             const progressETA = document.getElementById('progressETA');
             const progressDownloaded = document.getElementById('progressDownloaded');
@@ -3313,17 +1307,12 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
             
             progressBar.style.width = '0%';
             progressBar.classList.remove('complete', 'error');
-            progressTitle.textContent = videoInfo?.title || 'Starting download...';
+            progressTitle.textContent = videoInfo?.title || 'Starting...';
+            progressPercent.textContent = '0%';
             progressSpeed.textContent = '--';
             progressETA.textContent = '--';
             progressDownloaded.textContent = '--';
             cancelBtn.style.display = 'inline-flex';
-            
-            // Reset progress ring
-            resetProgressRing();
-            
-            // Update batch indicator
-            updateBatchIndicator();
             
             try {
                 const response = await fetch('/download', {
@@ -3332,11 +1321,10 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
                     body: JSON.stringify({ 
                         url, 
                         resolution, 
-                        // save_path: savePath, // Backend handles this
+                        save_path: savePath,
                         subtitles: downloadSubtitles,
                         subtitle_lang: subtitleLang,
-                        thumbnail: downloadThumbnail,
-                        cookies: cookies 
+                        thumbnail: downloadThumbnail
                     })
                 });
                 
@@ -3357,12 +1345,11 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
         }
 
         function listenForProgress(sessionId) {
-            if (eventSource) {
-                eventSource.close();
-            }
+            if (eventSource) eventSource.close();
             
             const progressBar = document.getElementById('progressBar');
             const progressTitle = document.getElementById('progressTitle');
+            const progressPercent = document.getElementById('progressPercent');
             const progressSpeed = document.getElementById('progressSpeed');
             const progressETA = document.getElementById('progressETA');
             const progressDownloaded = document.getElementById('progressDownloaded');
@@ -3381,17 +1368,11 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
                     return;
                 }
                 
-                // Update progress bar
                 progressBar.style.width = `${data.progress}%`;
+                progressPercent.textContent = `${Math.round(data.progress)}%`;
                 
-                // Update progress ring
-                updateProgressRing(data.progress);
+                if (data.title) progressTitle.textContent = data.title;
                 
-                if (data.title) {
-                    progressTitle.textContent = data.title;
-                }
-                
-                // Update status text
                 switch (data.status) {
                     case 'starting':
                         progressSpeed.textContent = '--';
@@ -3401,76 +1382,54 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
                     case 'downloading':
                         progressSpeed.textContent = data.speed || '--';
                         progressETA.textContent = data.eta || '--';
-                        if (data.downloaded && data.filesize) {
-                            progressDownloaded.textContent = `${data.downloaded}`;
-                        } else if (data.downloaded) {
-                            progressDownloaded.textContent = data.downloaded;
-                        }
+                        progressDownloaded.textContent = data.downloaded || '--';
                         break;
                     case 'processing':
-                        progressSpeed.textContent = '⚡';
-                        progressETA.textContent = 'Almost done';
+                        progressSpeed.textContent = '--';
+                        progressETA.textContent = 'Processing...';
                         break;
                     case 'complete':
                         progressBar.classList.add('complete');
-                        progressSpeed.textContent = '✓';
-                        progressETA.textContent = 'Done!';
+                        progressSpeed.textContent = '--';
+                        progressETA.textContent = 'Done';
                         cancelBtn.style.display = 'none';
                         eventSource.close();
                         downloadBtn.disabled = false;
                         
-                        // Check if there are more in the batch queue
                         if (isBatchDownloading && currentBatchIndex < batchQueue.length - 1) {
-                            setTimeout(() => {
-                                processNextInQueue();
-                            }, 1000);
+                            setTimeout(processNextInQueue, 1000);
                         } else {
-                            // Trigger celebration animation!
-                            setTimeout(() => {
-                                triggerCelebration(data.filename, data.filesize, sessionId);
-                            }, 300);
-                            
-                            // Reset batch state
+                            setTimeout(() => showSuccess(data.filename, data.filesize), 300);
                             isBatchDownloading = false;
                             batchQueue = [];
                             currentBatchIndex = 0;
-                            updateBatchIndicator();
                         }
                         break;
                     case 'cancelled':
                         progressBar.classList.add('error');
-                        progressSpeed.textContent = '✕';
                         progressETA.textContent = 'Cancelled';
                         cancelBtn.style.display = 'none';
                         eventSource.close();
                         downloadBtn.disabled = false;
-                        
-                        // Reset batch state on cancel
                         isBatchDownloading = false;
                         batchQueue = [];
                         currentBatchIndex = 0;
-                        updateBatchIndicator();
                         break;
                     case 'error':
                         progressBar.classList.add('error');
-                        progressSpeed.textContent = '✕';
                         progressETA.textContent = 'Error';
                         cancelBtn.style.display = 'none';
                         showAlert('error', data.error || 'Download failed');
                         eventSource.close();
                         downloadBtn.disabled = false;
-                        
-                        // Reset batch state on error
                         isBatchDownloading = false;
                         batchQueue = [];
                         currentBatchIndex = 0;
-                        updateBatchIndicator();
                         break;
                 }
             };
             
             eventSource.onerror = () => {
-                console.error('EventSource error');
                 eventSource.close();
                 downloadBtn.disabled = false;
             };
@@ -3485,6 +1444,89 @@ https://www.youtube.com/watch?v=zzzzz"></textarea>
                 }
             }
         }
+
+        function showSuccess(filename, filesize) {
+            document.getElementById('successFilename').textContent = filename || 'Download complete';
+            document.getElementById('successMeta').textContent = filesize || '';
+            document.getElementById('successModal').classList.add('active');
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.remove('active');
+        }
+
+        async function openDownloadFolder() {
+            try {
+                await fetch('/open_folder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path: savePathInput.value })
+                });
+            } catch (error) {
+                console.error('Failed to open folder:', error);
+            }
+            closeSuccessModal();
+        }
+
+        // Batch Modal
+        function openBatchModal() {
+            document.getElementById('batchModal').classList.add('active');
+            document.getElementById('batchTextarea').value = '';
+            document.getElementById('batchUrlCount').textContent = '0';
+            document.getElementById('batchProcessBtn').disabled = true;
+        }
+
+        function closeBatchModal() {
+            document.getElementById('batchModal').classList.remove('active');
+        }
+
+        document.getElementById('batchTextarea').addEventListener('input', (e) => {
+            const text = e.target.value;
+            const urls = text.split('\n').filter(line => extractYouTubeUrl(line.trim()));
+            document.getElementById('batchUrlCount').textContent = urls.length;
+            document.getElementById('batchProcessBtn').disabled = urls.length === 0;
+        });
+
+        function processBatchUrls() {
+            const text = document.getElementById('batchTextarea').value;
+            const urls = text.split('\n')
+                .map(line => extractYouTubeUrl(line.trim()))
+                .filter(url => url);
+            
+            if (urls.length > 0) {
+                batchQueue = urls;
+                currentBatchIndex = 0;
+                isBatchDownloading = true;
+                closeBatchModal();
+                urlInput.value = batchQueue[0];
+                fetchInfo();
+            }
+        }
+
+        function processNextInQueue() {
+            currentBatchIndex++;
+            if (currentBatchIndex < batchQueue.length) {
+                urlInput.value = batchQueue[currentBatchIndex];
+                fetchInfo().then(() => {
+                    setTimeout(startDownload, 500);
+                });
+            }
+        }
+
+        // Init
+        async function checkFfmpeg() {
+            try {
+                const response = await fetch('/check_ffmpeg');
+                const data = await response.json();
+                if (!data.installed) {
+                    showAlert('warning', 'ffmpeg not detected. Video merging may not work.');
+                }
+            } catch (error) {
+                console.error('Failed to check ffmpeg:', error);
+            }
+        }
+
+        checkFfmpeg();
     </script>
 </body>
 </html>
